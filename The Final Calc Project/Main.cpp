@@ -35,66 +35,63 @@ void camera();
 void drawSnowMan();
 void computePos(float deltaMove);
 void computeDir(float deltaAngle);
-float mv = 0.01;
+void keyboard(int k, int x, int y);
+
+float mv = 0.001;
 void my_display_code()
 {
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-	//	if (show_demo_window)
-	//	ImGui::ShowDemoWindow(&show_demo_window);
+		if (show_demo_window)
+		ImGui::ShowDemoWindow(&show_demo_window);
 
 
 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
 	static float f = 0.0f;
 	static int counter = 0;
+	ImGuiIO& io = ImGui::GetIO();
 
 	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
 	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 															//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-	if (ImGui::Button("  W  "))
+	if ( io.KeysDown[119] /*ImGui::Button("  W  ")*/)
 		movY += mv;
-	ImGui::SameLine();
-	if (ImGui::Button("  S  "))
+	if (io.KeysDown[115]  /*ImGui::Button("  S  ")*/)
 		movY -= mv;
-	ImGui::SameLine();
-	if (ImGui::Button("  A  "))
+	if (io.KeysDown[97]  /*ImGui::Button("  A  ")*/)
 		movX -= mv;
-	ImGui::SameLine();
-	if (ImGui::Button("  D  "))
+	if (io.KeysDown[100] /*ImGui::Button("  D  ")*/)
 		movX += mv;
 
-	if (ImGui::Button("  Up  "))
-	{
+	if (io.KeysDown[357]/*ImGui::Button("  Up  ")*/)
 		lY += mv;
-		std::cout << lY;
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("  Down "))
-	{
+	if (io.KeysDown[359]/*ImGui::Button("  Down ")*/)
 		lY -= mv;
-		std::cout << lY;
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("  Left  "))
-	{
+	if (io.KeysDown[356]/*ImGui::Button("  Left  ")*/)
 		lX += mv;
-		std::cout << lX;
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("  Right  "))
-	{
+	if (io.KeysDown[358]/*ImGui::Button("  Right  ")*/)
 		lX -= mv;
-		std::cout << lX;
-	}
-	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+	if (io.KeysDown[120]/*the X key*/)
+		movZ -= mv;
+	if(io.KeysDown[122]/*the Z key*/)
+		movZ += mv;
+
+
+	ImGui::Text("MovX %f  MovY %f  MovZ %f", movX, movY, movZ);
+	ImGui::Text("mv rate %f", mv);
+	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);   
+	
+	// Edit 1 float using a slider from 0.0f to 1.0f
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::End();
 
 	glPushMatrix();
 	{
-		glTranslated(0, -1, -1);
+		glScaled(0.1, 0.1, 0.1);
+		glTranslated(0,0, 0);
 		glColor3f(1.0f, 1.0f, 1.0f);
+		//glutSolidCylinder(1, 2, 32, 32);
 		drawSnowMan();
 	}
 	glPopMatrix();
@@ -110,12 +107,19 @@ void glut_display_func()
 
 	camera();
 
+
 	my_display_code();
+
 
 	// Rendering
 	ImGui::Render();
 	ImGuiIO& io = ImGui::GetIO();
-	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
+
+//	std::cout<<io.KeysDown[0];
+//	std::cout << io.WantCaptureKeyboard;
+//	if (io.WantCaptureKeyboard)
+	//	io.WantCaptureKeyboard = false;
+//	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 	glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 	//glClear(GL_COLOR_BUFFER_BIT);
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
@@ -148,11 +152,13 @@ int main(int argc, char** argv)
 	glutReshapeFunc(reshape);
 	//	glutTimerFunc(0, timer, 0);
 	glutIdleFunc(glut_display_func);
+	//glutKeyboardFunc(keyboard);
+	//glutSpecialFunc(keyboard);
 
 	//// Setup Dear ImGui context
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+//	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 														   //// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 	////ImGui::StyleColorsClassic();
@@ -244,4 +250,9 @@ void drawSnowMan()
 	// Draw Nose
 	glColor3f(1.0f, 0.5f, 0.5f);
 	glutSolidCone(0.08f, 0.5f, 10, 2);
+	//glutWireCone(0.08f, 0.5f, 10, 2);
+}
+void keyboard(int k, int x, int y)
+{
+	std::cout << k;
 }
