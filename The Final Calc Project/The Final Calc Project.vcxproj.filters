@@ -21,106 +21,97 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Shpere.cpp">
+    <ClCompile Include="AxisAlignBounding_Detection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\AxisAlignBounding_Detection.cpp">
+    <ClCompile Include="Collision_Data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Collision_Data.cpp">
+    <ClCompile Include="Cube.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Cube.cpp">
+    <ClCompile Include="imgui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\imgui-master\imgui.cpp">
+    <ClCompile Include="imgui_demo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\imgui-master\imgui_demo.cpp">
+    <ClCompile Include="imgui_draw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\imgui-master\imgui_draw.cpp">
+    <ClCompile Include="imgui_impl_glut.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\imgui-master\imgui_widgets.cpp">
+    <ClCompile Include="imgui_impl_opengl2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Plane.cpp">
+    <ClCompile Include="imgui_widgets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Quad.cpp">
+    <ClCompile Include="Plane.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\imgui-master\examples\imgui_impl_glut.cpp">
+    <ClCompile Include="Quad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\Desktop\imgui-master\examples\imgui_impl_opengl2.cpp">
+    <ClCompile Include="Shpere.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\Desktop\imgui-master\examples\imgui_impl_glut.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Collision_Data.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\imgui-master\examples\imgui_impl_opengl2.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="AxisAlignBounding_Data.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\AxisAlignBounding_Data.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Cube.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Collision_Data.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="imconfig.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Cube.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="imgui.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Header.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="imgui_impl_glut.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\imgui-master\imconfig.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="imgui_impl_opengl2.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\imgui-master\imgui.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="imgui_internal.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\imgui-master\imgui_internal.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="imstb_rectpack.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\imgui-master\imstb_rectpack.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="imstb_textedit.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\imgui-master\imstb_textedit.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="imstb_truetype.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\imgui-master\imstb_truetype.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="math3d.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\math3d.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="PhysicsEngine.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\PhysicsEngine.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="PhysicsEngineComponent.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\PhysicsEngineComponent.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Plane.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\PhysicsObject.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Quad.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Plane.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Shape.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Quad.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Shape.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\Shpere.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Desktop\CTest\Calculations-Project-Test\Calculations Project\texture.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Shpere.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
