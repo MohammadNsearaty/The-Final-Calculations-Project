@@ -4,7 +4,6 @@
 #define PhysicsEngine_H
 #pragma once
 #include <vector>
-#include "PhysicsObject.h"
 #include "Shape.h"
 #include "Plane.h"
 using namespace std;

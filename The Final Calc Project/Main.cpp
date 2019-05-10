@@ -9,6 +9,7 @@
 #include "imgui_impl_opengl2.h"
 #include<iostream>
 #include<math.h>
+#include"Cube.h"
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -30,6 +31,8 @@ double lX, lY;
 //when no key is being presses
 float deltaAngle = 0.0f;
 float deltaMove = 0;
+GLUquadric *glu = gluNewQuadric();
+Cube cube(glu,1,1,0,0,0,1,1,1);
 
 void camera();
 void drawSnowMan();
@@ -41,8 +44,8 @@ float mv = 0.001;
 void my_display_code()
 {
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-		if (show_demo_window)
-		ImGui::ShowDemoWindow(&show_demo_window);
+		//if (show_demo_window)
+	//	ImGui::ShowDemoWindow(&show_demo_window);
 
 
 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
@@ -51,6 +54,7 @@ void my_display_code()
 	ImGuiIO& io = ImGui::GetIO();
 
 	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
 
 	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 															//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
@@ -92,9 +96,11 @@ void my_display_code()
 		glTranslated(0,0, 0);
 		glColor3f(1.0f, 1.0f, 1.0f);
 		//glutSolidCylinder(1, 2, 32, 32);
-		drawSnowMan();
+		//drawSnowMan();
+		cube.draw_3D();
 	}
 	glPopMatrix();
+	cube.testRotate(Vector3f(0.1, 0, 0), Vector3f(1, 1, 1));
 }
 
 void glut_display_func()
@@ -119,7 +125,7 @@ void glut_display_func()
 //	std::cout << io.WantCaptureKeyboard;
 //	if (io.WantCaptureKeyboard)
 	//	io.WantCaptureKeyboard = false;
-//	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
+	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 	glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 	//glClear(GL_COLOR_BUFFER_BIT);
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
@@ -141,7 +147,7 @@ int main(int argc, char** argv)
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 #endif
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_MULTISAMPLE);
-	glutInitWindowSize(720, 600);
+	glutInitWindowSize(1200, 720);
 	glutCreateWindow("Dear ImGui GLUT+OpenGL2 Example");
 
 
@@ -150,7 +156,7 @@ int main(int argc, char** argv)
 	// otherwise it is possible to install our own functions and call the imgui_impl_glut.h functions ourselves.
 	glutDisplayFunc(glut_display_func);
 	glutReshapeFunc(reshape);
-	//	glutTimerFunc(0, timer, 0);
+		glutTimerFunc(0, timer, 0);
 	glutIdleFunc(glut_display_func);
 	//glutKeyboardFunc(keyboard);
 	//glutSpecialFunc(keyboard);
@@ -196,7 +202,7 @@ void reshape(int w, int h)
 void timer(int)
 {
 	glutPostRedisplay();
-	glutTimerFunc(1000 / 600, timer, 0);
+	glutTimerFunc(1000 / 60, timer, 0);
 }/*
  void computePos(float deltaMove) {
  x += deltaMove * lx * 0.1f;

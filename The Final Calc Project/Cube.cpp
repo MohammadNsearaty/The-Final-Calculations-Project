@@ -1,5 +1,6 @@
 #include "Cube.h"
 #include "Shape.h"
+
 Cube::Cube() {
 	Shapes();
 	quadric1 = gluNewQuadric();
@@ -13,7 +14,20 @@ Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, flo
 	length[0] = l;
 	calcEdges();
 }
-
+ void Cube::testRotate(Vector3f force, Vector3f point)
+{
+	 generateInteriaTensor();
+	Vector3f res = position - point;
+	float len = res.Length();
+	torque = res.Cross(force);
+}
+void Cube::generateInteriaTensor()
+{
+	float d =  2*(length[0] * length[0]);
+	float res = 1 / 12 * mass * d;
+	
+	iTensor[0][0] = iTensor[1][1] = iTensor[2][2] = res;
+}
 void Cube::calcEdges()
 {
 	float d = length[0] / 2;

@@ -19,6 +19,8 @@ public:
 	void draw_3D();
 	void calcEdges();
 	Collision_Data Collision(Shapes* other);
+	void testRotate(Vector3f force, Vector3f point);
+	void generateInteriaTensor();
 
 	void Collision2();
 
