@@ -9,24 +9,24 @@
 #include <cmath>
 #include<iostream>
 #include "math3d.h"
-
+#include<glm/glm.hpp>
 #include "Collision_Data.h"
-
+using namespace glm;
 
 //Abstruct Class for shapes
 class Shapes {
 protected:
 
-	Vector3f position;
-	Vector3f color;
-	Vector3f acc;
-	Vector3f speed;
-	Vector3f omega;
-	Vector3f torque;
-	Matrix3f rotation;//the Matrix of rotation R(x)
-	Matrix3f iTensor;
-	Matrix3f iTensorInv;
-	Matrix3f Iinv;
+	vec3 position;
+	vec3 color;
+	vec3 acc;
+	vec3 speed;
+	vec3 angularMo;
+	vec3 torque;
+	mat3 rotation;//the Matrix of rotation R(x)
+	mat3x3 iTensor;
+	mat3 iTensorInv;
+	mat3 I;
 	//Quaternion orientation;//for agregating the R(x) Matrices
 	float mass;
 	float length[5];
@@ -39,58 +39,62 @@ protected:
 
 public:
 	Shapes() {
-		position.Set(0, 0, 0);
-		color.Set(0.0f, 0.0f, 0.0f);
-		acc.Set(0, 0, 0);
+		position = vec3(0.0f);
+		color = vec3(0.0f);
+		acc = vec3(0.0f);
+		speed = vec3(0.0f);
+		angularMo = vec3(0.0f);
+		torque = vec3(0.0f);
+		rotation = mat3(0.0f);
+		rotation[0][0] = rotation[1][1] = rotation[2][2] = 1.0f;
+		iTensor = mat3(0.0f);
+		iTensorInv = mat3(0.0f);
+		I = mat3(0.0f);
 		mass = 0.0f;
-		speed.Set(0, 0, 0);
-		omega.Set(0, 0, 0);
-		iTensor.Set(3, 3, 0);
-		rotation.Set(3, 3, 0);
-		rotation[0][0] = rotation[1][1] = rotation[2][2] = 1;
-		Iinv.Set(3, 3, 0);
-		iTensorInv = iTensor.Inverse();
-	}
+		pitch = yaw = roll = 0.0f;
+		}
 	Shapes(float Coordinates1, float Coordinates2, float Coordinates3, float Color1, float Color2, float Color3) {
-		position.Set(Coordinates1, Coordinates2, Coordinates3);
-		color.Set(Color1, Color2, Color3);
-		acc.Set(0, 0, 0);
+		position = vec3(Coordinates1, Coordinates2, Coordinates3);
+		color = vec3(Color1, Color2, Color3);
+		acc = vec3(0, 0, 0);
 		mass = 0.0f;
-		speed.Set(0, 0, 0);
-		omega.Set(0, 0, 0);
-		iTensor.Set(3, 3, 0);
+		speed = vec3(0, 0, 0);
+		angularMo = vec3(0, 0, 0);
 		rotation[0][0] = rotation[1][1] = rotation[2][2] = 1;
-		iTensorInv = iTensor.Inverse();
-		Iinv.Set(3, 3, 0);
+		iTensor = mat3(0.0f);
+		iTensorInv = mat3(0.0f);
+		I = mat3(0.0f);
+		mass = 0.0f;
+		pitch = yaw = roll = 0.0f;
 	}
 	void Integrate() {
-		position.Set(position.GetX() + speed.GetX(), position.GetY() + speed.GetY(), position.GetZ() + speed.GetZ());
+		position = position + speed;
 	}
-	Vector3f getPostion() {
+	vec3 getPostion() {
 		return position;
 	}
-	Vector3f getSpeed() {
+	vec3 getSpeed() {
 		return speed;
 	}
 	float getMass()
 	{
 		return mass;
 	}
-	Vector3f getAcc()
+	vec3 getAcc()
 	{
 		return acc;
 	}
-	void setPosition(Vector3f pos)
+	void setPosition(vec3 pos)
 	{
-		position.Set(pos.GetX(), pos.GetY(), pos.GetZ());
+		position = pos;
 	}
-	void setSpeed(Vector3f sp)
+	void setSpeed(vec3 sp)
 	{
-		speed.Set(sp.GetX(), sp.GetY(), sp.GetZ());
+		speed = sp;
 	}
-	void setAcc(Vector3f ac)
+	void setAcc(vec3 ac)
 	{
-		acc.Set(ac.GetX(), ac.GetY(), ac.GetZ());
+		acc = ac;
 	}
 	void setMass(float m)
 	{
@@ -102,10 +106,18 @@ public:
 	}
 	void reverseSpeed(int x, int y, int z)
 	{
-		speed.SetX(speed.GetX()*x);
-		speed.SetY(speed.GetY() * y);
-		speed.SetZ(speed.GetZ() * z);
+		speed.x*=x;
+		speed.y *= y;
+		speed.z *= speed.z;
 	}
+
+	float getPitch() { return pitch; }
+	float getYaw() { return yaw; }
+	float getRoll() { return roll; }
+
+	void setPitch(float p) { pitch = p; }
+	void setYaw(float y) { yaw = y; }
+	void setRoll(float r) { roll = r; }
 	//virtual void generateInteriaTensor();
 	virtual Collision_Data Collision(Shapes *other) { return Collision_Data(1, true); };
 	//TODO:To draw 2D shapes
@@ -115,15 +127,24 @@ public:
 	virtual void draw_3D() {};
 
 	//TODO:To move the Shapes
-	void applyForce(Vector3f force) {
-
-		force.Set(force.GetX() / mass, force.GetY() / mass, force.GetZ() / mass);
-		acc.Set(acc.GetX() + force.GetX(), acc.GetY() + force.GetY(), acc.GetZ() + force.GetZ());
-		speed.Set(speed.GetX() + acc.GetX(), speed.GetY() + acc.GetY(), speed.GetZ() + acc.GetZ());
-		position.Set(position.GetX() + speed.GetX(), position.GetY() + speed.GetY(), position.GetZ() + speed.GetZ());
-		acc.Set(0, 0, 0);
+	void applyForce(vec3 force) {
+		force = force / mass;
+		acc += force;
+		speed += acc;
+		acc = vec3(0.0f);
 	}
+	mat3 star(vec3 v)
+	{
+		mat3 matrix = mat3(0.0f);
+		matrix[0][1] = -v.z;
+		matrix[0][2] = v.y;
+		matrix[1][0] = v.z;
+		matrix[1][2] = -v.x;
+		matrix[2][0] = -v.y;
+		matrix[2][1] = v.x;
 
+		return matrix;
+	}
 	//TODO:To Collision
 	virtual void Collision2() {};
 };

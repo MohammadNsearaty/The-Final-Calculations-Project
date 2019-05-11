@@ -9,7 +9,7 @@ class Cube : public Shapes {
 
 private:
 	GLUquadric *quadric1 = gluNewQuadric();
-	Vector3f edges[8];
+	vec3 edges[8];
 public:
 	Cube();
 	Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, float c1, float c2, float c3);
@@ -19,9 +19,10 @@ public:
 	void draw_3D();
 	void calcEdges();
 	Collision_Data Collision(Shapes* other);
-	void testRotate(Vector3f force, Vector3f point);
+	void testRotate(vec3 force, vec3 point);
 	void generateInteriaTensor();
 
+	void simulateRotation();
 	void Collision2();
 
 

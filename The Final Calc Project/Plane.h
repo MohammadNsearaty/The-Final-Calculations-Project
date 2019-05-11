@@ -4,26 +4,26 @@
 #include "math3d.h"
 #include "Shape.h"
 #include"Shpere.h"
-
+#include<glm/glm.hpp>
 
 class Plane {
 
 private:
-	Vector3f normal;
+	vec3 normal;
 	float length;
 
 public:
 	Plane() {
-		normal = 0.0f;
+		normal = vec3(0.0f);
 		length = 0.0f;
 	}
-	Plane(Vector3f Normal, float distance)
+	Plane(vec3 Normal, float distance)
 	{
 		normal = Normal;
 		length = distance;
 	}
 
-	Vector3f getNormal() { return normal; }
+	vec3 getNormal() { return normal; }
 
 	float getLength() {
 		return length;

@@ -82,6 +82,7 @@ void my_display_code()
 
 
 	ImGui::Text("MovX %f  MovY %f  MovZ %f", movX, movY, movZ);
+	ImGui::Text("Pitch  %f  Yaw %f  Roll %f", cube.getPitch(), cube.getYaw(), cube.getRoll());
 	ImGui::Text("mv rate %f", mv);
 	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);   
 	
@@ -97,10 +98,14 @@ void my_display_code()
 		glColor3f(1.0f, 1.0f, 1.0f);
 		//glutSolidCylinder(1, 2, 32, 32);
 		//drawSnowMan();
-		cube.draw_3D();
+		cube.testRotate(vec3(0.000007, 0, 0), vec3(0.5f, 0.5f, 0.0f));
+		cube.simulateRotation();
+	//	cube.draw_3D();
+		//cube.setPitch(0.0f);
+		//cube.setYaw(0.0f);
+		//cube.setRoll(0.0f);
 	}
 	glPopMatrix();
-	cube.testRotate(Vector3f(0.1, 0, 0), Vector3f(1, 1, 1));
 }
 
 void glut_display_func()
@@ -110,17 +115,11 @@ void glut_display_func()
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL2_NewFrame();
 	ImGui_ImplGLUT_NewFrame();
-
 	camera();
-
-
 	my_display_code();
-
-
 	// Rendering
 	ImGui::Render();
 	ImGuiIO& io = ImGui::GetIO();
-
 //	std::cout<<io.KeysDown[0];
 //	std::cout << io.WantCaptureKeyboard;
 //	if (io.WantCaptureKeyboard)
@@ -156,7 +155,7 @@ int main(int argc, char** argv)
 	// otherwise it is possible to install our own functions and call the imgui_impl_glut.h functions ourselves.
 	glutDisplayFunc(glut_display_func);
 	glutReshapeFunc(reshape);
-		glutTimerFunc(0, timer, 0);
+	glutTimerFunc(0, timer, 0);
 	glutIdleFunc(glut_display_func);
 	//glutKeyboardFunc(keyboard);
 	//glutSpecialFunc(keyboard);
@@ -202,8 +201,9 @@ void reshape(int w, int h)
 void timer(int)
 {
 	glutPostRedisplay();
-	glutTimerFunc(1000 / 60, timer, 0);
-}/*
+	glutTimerFunc(1, timer, 0);
+}
+/*
  void computePos(float deltaMove) {
  x += deltaMove * lx * 0.1f;
  z += deltaMove * lz * 0.1f;
