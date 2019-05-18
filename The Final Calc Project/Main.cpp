@@ -10,6 +10,7 @@
 #include<iostream>
 #include<math.h>
 #include"Cube.h"
+#include"Shpere.h"
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -33,12 +34,15 @@ float deltaAngle = 0.0f;
 float deltaMove = 0;
 GLUquadric *glu = gluNewQuadric();
 Cube cube(glu,1,1,0,0,0,1,1,1);
+Shpere sp(glu,2,1,0,0,0,1,0,0);
 
 void camera();
 void drawSnowMan();
 void computePos(float deltaMove);
 void computeDir(float deltaAngle);
 void keyboard(int k, int x, int y);
+
+vec3 testForce = vec3(0.0007,0,0);
 
 float mv = 0.001;
 void my_display_code()
@@ -96,14 +100,8 @@ void my_display_code()
 		glScaled(0.1, 0.1, 0.1);
 		glTranslated(0,0, 0);
 		glColor3f(1.0f, 1.0f, 1.0f);
-		//glutSolidCylinder(1, 2, 32, 32);
-		//drawSnowMan();
-		cube.testRotate(vec3(0.000007, 0, 0), vec3(0.5f, 0.5f, 0.0f));
-		cube.simulateRotation();
-	//	cube.draw_3D();
-		//cube.setPitch(0.0f);
-		//cube.setYaw(0.0f);
-		//cube.setRoll(0.0f);
+		cube.simulateRotation(vec3(0.5f, 0.5f, 0.0f), testForce);
+		testForce = vec3(0, 0, 0);
 	}
 	glPopMatrix();
 }

@@ -4,6 +4,7 @@
 #define CUBE_H
 
 #include"Shape.h"
+#include<glm/gtx/quaternion.hpp>
 
 class Cube : public Shapes {
 
@@ -22,7 +23,6 @@ public:
 	void testRotate(vec3 force, vec3 point);
 	void generateInteriaTensor();
 
-	void simulateRotation();
 	void Collision2();
 
 

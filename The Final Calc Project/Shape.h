@@ -11,6 +11,7 @@
 #include "math3d.h"
 #include<glm/glm.hpp>
 #include "Collision_Data.h"
+#include<glm/gtx/quaternion.hpp>
 using namespace glm;
 
 //Abstruct Class for shapes
@@ -22,11 +23,11 @@ protected:
 	vec3 acc;
 	vec3 speed;
 	vec3 angularMo;
-	vec3 torque;
 	mat3 rotation;//the Matrix of rotation R(x)
+	//constant
 	mat3x3 iTensor;
 	mat3 iTensorInv;
-	mat3 I;
+	
 	//Quaternion orientation;//for agregating the R(x) Matrices
 	float mass;
 	float length[5];
@@ -44,12 +45,10 @@ public:
 		acc = vec3(0.0f);
 		speed = vec3(0.0f);
 		angularMo = vec3(0.0f);
-		torque = vec3(0.0f);
 		rotation = mat3(0.0f);
 		rotation[0][0] = rotation[1][1] = rotation[2][2] = 1.0f;
 		iTensor = mat3(0.0f);
 		iTensorInv = mat3(0.0f);
-		I = mat3(0.0f);
 		mass = 0.0f;
 		pitch = yaw = roll = 0.0f;
 		}
@@ -63,12 +62,35 @@ public:
 		rotation[0][0] = rotation[1][1] = rotation[2][2] = 1;
 		iTensor = mat3(0.0f);
 		iTensorInv = mat3(0.0f);
-		I = mat3(0.0f);
 		mass = 0.0f;
 		pitch = yaw = roll = 0.0f;
 	}
+	void simulateRotation(vec3 point, vec3 force) {
+
+		vec3 res = pointTolocalAxis(point);
+		vec3 torque = glm::cross(res, force);
+		angularMo += torque;
+		mat3 I = rotation * iTensor * (glm::transpose(rotation));
+		vec3 omega = vec3(0.0f);
+		omega = glm::inverse(I) * angularMo;
+		
+		mat3 mat = star(omega);
+		rotation += mat * rotation;
+		
+		pitch = glm::degrees(atan2(rotation[1][2], rotation[2][2]));
+		yaw = glm::degrees(atan2(-rotation[2][0], sqrt((rotation[1][2] * rotation[1][2]) + (rotation[2][2] * rotation[2][2]))));
+		roll = glm::degrees(atan2(rotation[1][0], rotation[0][0]));
+		glPushMatrix();
+		{
+			glRotated(pitch, 1, 0, 0);
+			glRotated(yaw, 0, 1, 0);
+			glRotated(roll, 0, 0, 1);
+			draw_3D();
+		}glPopMatrix();
+	}
 	void Integrate() {
 		position = position + speed;
+
 	}
 	vec3 getPostion() {
 		return position;
@@ -142,8 +164,31 @@ public:
 		matrix[1][2] = -v.x;
 		matrix[2][0] = -v.y;
 		matrix[2][1] = v.x;
-
 		return matrix;
+	}
+	vec3 pointTolocalAxis(vec3 point)
+	{
+		vec3 res = glm::inverse(rotation) * point;
+		return res;
+	}
+   void toEulerAngle(fquat q)
+	{
+		// roll (x-axis rotation)
+		double sinr_cosp = +2.0 * (q.w * q.x + q.y * q.z);
+		double cosr_cosp = +1.0 - 2.0 * (q.x * q.x + q.y * q.y);
+		roll = atan2(sinr_cosp, cosr_cosp);
+
+		// pitch (y-axis rotation)
+		double sinp = +2.0 * (q.w * q.y - q.z * q.x);
+		if (fabs(sinp) >= 1)
+			pitch = copysign(3.14f / 2, sinp); // use 90 degrees if out of range
+		else
+			pitch = asin(sinp);
+
+		// yaw (z-axis rotation)
+		double siny_cosp = +2.0 * (q.w * q.z + q.x * q.y);
+		double cosy_cosp = +1.0 - 2.0 * (q.y * q.y + q.z * q.z);
+		yaw = atan2(siny_cosp, cosy_cosp);
 	}
 	//TODO:To Collision
 	virtual void Collision2() {};

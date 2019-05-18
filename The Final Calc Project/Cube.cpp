@@ -3,6 +3,8 @@
 #include<glm/matrix.hpp>
 #include<glm/gtc/matrix_transform.hpp>
 #include<glm/gtc/type_ptr.hpp>
+#include<glm/gtx/quaternion.hpp>
+
 using namespace glm;
 
 
@@ -10,6 +12,8 @@ Cube::Cube() {
 	Shapes();
 	quadric1 = gluNewQuadric();
 	length[0] = 1;
+	generateInteriaTensor();
+	iTensorInv = glm::inverse(iTensor);
 }
 Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, float c1, float c2, float c3) {
 	
@@ -20,48 +24,10 @@ Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, flo
 	length[0] = l;
 	calcEdges();
 	rotation[0][0] = rotation[1][1] = rotation[2][2] = 1.0f;
+	generateInteriaTensor();
+	iTensorInv = glm::inverse(iTensor);
 }
- void Cube::testRotate(vec3 force, vec3 point)
-{
-	 generateInteriaTensor();
-	vec3 res = position - point;
-	torque = glm::cross(res,force);
-	angularMo += torque;
-	I = rotation * iTensorInv * (glm::transpose(rotation));
-	vec3 omega;
-	omega = vec3(0.0f);
-	mat3 tmp;
-	tmp[0] = angularMo;
-	omega = glm::inverse(I) * angularMo;
-	rotation += star(omega) * rotation;
 
-	float tmp1 = atan2(rotation[1][2], rotation[2][2]);
-	float tmp2 = atan2(-rotation[2][0], sqrt((rotation[1][2] * rotation[1][2]) + (rotation[2][2] * rotation[2][2])));
-	float tmp3= atan2(rotation[1][0], rotation[0][0]);
-
-	pitch += glm::abs(atan2(rotation[1][2], rotation[2][2]));
-	yaw += glm::abs(atan2(-rotation[2][0], sqrt((rotation[1][2] * rotation[1][2]) + (rotation[2][2] * rotation[2][2]))));
-	roll += glm::abs(atan2(rotation[1][0], rotation[0][0]));
-
-	//if (pitch >= 360.0f)
-	//	pitch = 0.0;
-	//if (yaw >= 360.0f)
-	//	yaw = 0.0;
-//	if (roll >= 360.0f)
-	//	roll -= 1.0f;
-
-	
- }
- void Cube::simulateRotation()
- {
-	glPushMatrix();
-	 {
-		 glRotated(pitch, 1, 0, 0);
-		 glRotated(yaw, 0, 1, 0);
-		 glRotated(roll, 0, 0, 1);
-		 draw_3D();
-	 }glPopMatrix();
- }
 void Cube::generateInteriaTensor()
 {
 	float d =  2*(length[0] * length[0]);
@@ -69,7 +35,7 @@ void Cube::generateInteriaTensor()
 	float res = (res1* d);
 	
 	iTensor[0][0] = iTensor[1][1] = iTensor[2][2] = res;
-	iTensorInv[0][0] = iTensorInv[1][1] = iTensorInv[2][2] = (1 / res);
+//	iTensorInv[0][0] = iTensorInv[1][1] = iTensorInv[2][2] = (1 / res);
 }
 void Cube::calcEdges()
 {
@@ -86,6 +52,7 @@ void Cube::calcEdges()
 }
 
 void Cube::draw_3D() {
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BITS);
 	glColor3d(color.x, color.y, color.z);
 	glPushMatrix();
 	{
