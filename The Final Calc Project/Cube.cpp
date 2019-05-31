@@ -23,7 +23,6 @@ Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, flo
 	quadric1 = quadric;
 	length[0] = l;
 	calcEdges();
-	rotation[0][0] = rotation[1][1] = rotation[2][2] = 1.0f;
 	generateInteriaTensor();
 	iTensorInv = glm::inverse(iTensor);
 }

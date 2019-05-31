@@ -34,8 +34,9 @@ public:
 
 	Collision_Data Collision(Shapes* other);
 	void Collision2() {
-
 	}
+
+	void generateOBB();
 
 
 

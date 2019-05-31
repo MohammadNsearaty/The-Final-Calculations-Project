@@ -19,6 +19,11 @@ Shpere::Shpere(GLUquadric *quadric, float r, float m, float x, float y, float z,
 void Shpere::Draw_Shpere() {
 
 }
+void Shpere::generateOBB()
+{
+	obb.center = this->position;
+	
+}
 void Shpere::setRadius(float R)
 {
 	length[0] = R;

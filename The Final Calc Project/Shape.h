@@ -12,22 +12,21 @@
 #include<glm/glm.hpp>
 #include "Collision_Data.h"
 #include<glm/gtx/quaternion.hpp>
+#include"OBB.h"
 using namespace glm;
 
 //Abstruct Class for shapes
 class Shapes {
 protected:
-
 	vec3 position;
 	vec3 color;
 	vec3 acc;
 	vec3 speed;
 	vec3 angularMo;
-	mat3 rotation;//the Matrix of rotation R(x)
+	//mat3 rotation;//the Matrix of rotation R(x)
 	//constant
 	mat3x3 iTensor;
 	mat3 iTensorInv;
-	
 	//Quaternion orientation;//for agregating the R(x) Matrices
 	float mass;
 	float length[5];
@@ -35,8 +34,8 @@ protected:
 	float pitch;
 	float yaw;
 	float roll;
-
-
+	//The Oriented Bounding Box
+	OBB obb;
 
 public:
 	Shapes() {
@@ -45,8 +44,9 @@ public:
 		acc = vec3(0.0f);
 		speed = vec3(0.0f);
 		angularMo = vec3(0.0f);
-		rotation = mat3(0.0f);
-		rotation[0][0] = rotation[1][1] = rotation[2][2] = 1.0f;
+		obb = OBB();
+		//rotation = mat3(0.0f);
+		//rotation[0][0] = rotation[1][1] = rotation[2][2] = 1.0f;
 		iTensor = mat3(0.0f);
 		iTensorInv = mat3(0.0f);
 		mass = 0.0f;
@@ -59,27 +59,30 @@ public:
 		mass = 0.0f;
 		speed = vec3(0, 0, 0);
 		angularMo = vec3(0, 0, 0);
-		rotation[0][0] = rotation[1][1] = rotation[2][2] = 1;
+		//rotation[0][0] = rotation[1][1] = rotation[2][2] = 1;
 		iTensor = mat3(0.0f);
 		iTensorInv = mat3(0.0f);
 		mass = 0.0f;
 		pitch = yaw = roll = 0.0f;
 	}
+	//generate the OBB for each body
+	virtual void generateOBB() {};
+	//
 	void simulateRotation(vec3 point, vec3 force) {
 
 		vec3 res = pointTolocalAxis(point);
 		vec3 torque = glm::cross(res, force);
 		angularMo += torque;
-		mat3 I = rotation * iTensor * (glm::transpose(rotation));
+		mat3 I = obb.u * iTensor * (glm::transpose(obb.u));
 		vec3 omega = vec3(0.0f);
 		omega = glm::inverse(I) * angularMo;
 		
 		mat3 mat = star(omega);
-		rotation += mat * rotation;
+		obb.u += mat * obb.u;
 		
-		pitch = glm::degrees(atan2(rotation[1][2], rotation[2][2]));
-		yaw = glm::degrees(atan2(-rotation[2][0], sqrt((rotation[1][2] * rotation[1][2]) + (rotation[2][2] * rotation[2][2]))));
-		roll = glm::degrees(atan2(rotation[1][0], rotation[0][0]));
+		pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
+		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[1][2] * obb.u[1][2]) + (obb.u[2][2] * obb.u[2][2]))));
+		roll = glm::degrees(atan2(obb.u[1][0], obb.u[0][0]));
 		glPushMatrix();
 		{
 			glRotated(pitch, 1, 0, 0);
@@ -90,7 +93,6 @@ public:
 	}
 	void Integrate() {
 		position = position + speed;
-
 	}
 	vec3 getPostion() {
 		return position;
@@ -168,7 +170,7 @@ public:
 	}
 	vec3 pointTolocalAxis(vec3 point)
 	{
-		vec3 res = glm::inverse(rotation) * point;
+		vec3 res = glm::transpose(obb.u) * point;
 		return res;
 	}
    void toEulerAngle(fquat q)
