@@ -51,6 +51,9 @@ public:
 		iTensorInv = mat3(0.0f);
 		mass = 0.0f;
 		pitch = yaw = roll = 0.0f;
+
+		obb.u = mat3(0.0f);
+		obb.u[0][0] = obb.u[1][1] = obb.u[2][2] =  1.0f;
 		}
 	Shapes(float Coordinates1, float Coordinates2, float Coordinates3, float Color1, float Color2, float Color3) {
 		position = vec3(Coordinates1, Coordinates2, Coordinates3);
@@ -85,14 +88,13 @@ public:
 		pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
 		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[1][2] * obb.u[1][2]) + (obb.u[2][2] * obb.u[2][2]))));
 		roll = glm::degrees(atan2(obb.u[1][0], obb.u[0][0]));
-		glPushMatrix();
+	/*	glPushMatrix();
 		{
-			glRotated(pitch, 1, 0, 0);
-			glRotated(yaw, 0, 1, 0);
-			glRotated(roll, 0, 0, 1);
+		//	glTranslated(this->position.x, this->position.y, this->position.z);
+			
 			draw_3D();
 		}glPopMatrix();
-	}
+*/	}
 	void Integrate() {
 		position = position + speed;
 		obb.center = position;

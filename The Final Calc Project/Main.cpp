@@ -37,8 +37,8 @@ float deltaMove = 0;
 //the physics engine
 PhysicsEngine engine = PhysicsEngine();
 GLUquadric *glu = gluNewQuadric();
-Cube cube1(glu, 0.3, 1, 0, 0, 0, 1, 0, 1);
-Cube cube2(glu, 0.3, 1, -0.2, 1, 0, 1, 1, 1);
+Cube cube1(glu, 2, 1, 0, 4, 0, 1, 0, 1);
+Cube cube2(glu, 2,1, 0, 0, 0, 1, 1, 1);
 Shpere sp1(glu, 0.2, 1, 0, 0, 0, 1, 0, 0);
 Shpere sp2(glu, 0.2, 1, 0, 1, 0, 0, 1, 0);
 
@@ -55,6 +55,7 @@ vec3 virtualGravity = vec3(0, -0.001, 0);
 
 float mv = 0.001;
 int res = 0;
+float dist = 0.0;
 void my_display_code()
 {
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
@@ -100,7 +101,8 @@ void my_display_code()
 	ImGui::Text("mv rate %f", mv);
 */
 	ImGui::Text("the Collision detection result %d", res);
-	ImGui::Text("pitch  %f , yaw %f , roll %f",cube2.getPitch(),cube2.getYaw(),cube2.getRoll());
+	ImGui::Text("The Distance is %f", dist);
+	ImGui::Text("pitch  %f , yaw %f , roll %f",cube1.getPitch(),cube1.getYaw(),cube1.getRoll());
 	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);   
 	
 	// Edit 1 float using a slider from 0.0f to 1.0f
@@ -110,17 +112,25 @@ void my_display_code()
 
 	glPushMatrix();
 	{
-		cube2.simulateRotation(-vec3(0.1, 0, 0), testForce);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BITS);
+		glScaled(0.1, 0.1, 0.1);
 
+	dist = 	engine.SqDistPointToOBB(cube1.getPostion(),cube2.getOBB());
 
-		cube2.applyForce(virtualGravity);
-		cube2.Integrate();
-		cube1.draw_3D();
-		cube2.draw_3D();
+		cube1.simulateRotation(vec3(1, 1,0), testForce);
+		cube2.simulateRotation(vec3(1, 1, 0), testForce);
+		testForce = vec3(0.0f);
+
+		cube1.applyForce(virtualGravity);
+		cube1.Integrate();
+
 		virtualGravity = vec3(0.0f);
 
+		cube2.draw_3D();
+		cube1.draw_3D();
+
 		 res = engine.TestOBB(cube1.getOBB(), cube2.getOBB());
-		 cout << res;
+		 
 	}
 	glPopMatrix();
 }

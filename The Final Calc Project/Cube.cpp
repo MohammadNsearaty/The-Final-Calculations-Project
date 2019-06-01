@@ -4,6 +4,7 @@
 #include<glm/gtc/matrix_transform.hpp>
 #include<glm/gtc/type_ptr.hpp>
 #include<glm/gtx/quaternion.hpp>
+#include<freeglut.h>
 
 using namespace glm;
 
@@ -57,9 +58,19 @@ void Cube::calcEdges()
 }
 
 void Cube::draw_3D() {
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BITS);
-	glColor3d(color.x, color.y, color.z);
+	//glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BITS);
 	glPushMatrix();
+	{
+		glTranslated(this->position.x, this->position.y, this->position.z);
+		glColor3d(color.x, color.y, color.z);
+		glRotated(pitch, 1, 0, 0);
+		glRotated(yaw, 0, 1, 0);
+		glRotated(roll, 0, 0, 1);
+		glutSolidCube(this->length[0]);
+//		glTranslated(0, 0, 0);
+	//	glColor3d(1, 1, 1);
+	}glPopMatrix();
+	/*glPushMatrix();
 	{
 
 		calcEdges();
@@ -72,7 +83,7 @@ void Cube::draw_3D() {
 		glVertex3f(edges[3].x, edges[3].y, edges[3].z);
 		glEnd();
 		//right face
-		//glColor3d(0, 1, 0);
+		glColor3d(0, 1, 0);
 		glBegin(GL_QUADS);
 		glVertex3f(edges[0].x, edges[0].y, edges[0].z);
 		glVertex3f(edges[1].x, edges[1].y, edges[1].z);
@@ -80,7 +91,7 @@ void Cube::draw_3D() {
 		glVertex3f(edges[7].x, edges[7].y, edges[7].z);
 		glEnd();
 		//back face
-		//glColor3d(color.x, color.y, color.z);
+		glColor3d(color.x, color.y, color.z);
 		glBegin(GL_QUADS);
 		glVertex3f(edges[0].x, edges[0].y, edges[0].z);
 		glVertex3f(edges[3].x, edges[3].y, edges[3].z);
@@ -88,7 +99,7 @@ void Cube::draw_3D() {
 		glVertex3f(edges[7].x, edges[7].y, edges[7].z);
 		glEnd();
 		//left face
-		//glColor3d(0, 0, 1);
+		glColor3d(0, 0, 1);
 		glBegin(GL_QUADS);
 		glVertex3f(edges[3].x, edges[3].y, edges[3].z);
 		glVertex3f(edges[2].x, edges[2].y, edges[2].z);
@@ -96,7 +107,7 @@ void Cube::draw_3D() {
 		glVertex3f(edges[4].x, edges[4].y, edges[4].z);
 		glEnd();
 		//bottom face
-		//glColor3d(0.35,0.7,0.9);
+		glColor3d(0.35,0.7,0.9);
 
 		glBegin(GL_QUADS);
 		glVertex3f(edges[4].x, edges[4].y, edges[4].z);
@@ -117,7 +128,7 @@ void Cube::draw_3D() {
 	}
 	glPopMatrix();
 	glColor3d(1, 1, 1);
-
+	*/
 }
 
 //TODO:The Virtual Function you must reDefine it in The subclass 

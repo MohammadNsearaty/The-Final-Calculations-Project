@@ -37,22 +37,29 @@ public:
 
 	int TestOBB(OBB &a, OBB &b);
 
+	vec3 ClosestPointToPlane(vec3 point, Plane plane);
+	float distPointToPlane(vec3 point, Plane plane);
+	vec3 ClosestPointToOBB(vec3 point, OBB obb);
+	float SqDistPointToOBB(vec3 point, OBB obb);
+
+
+
 
 };
 
-vec3 ClosestPointToPlane(vec3 point, Plane plane)
+vec3 PhysicsEngine::ClosestPointToPlane(vec3 point, Plane plane)
 {
 	plane.Normalized();
 	float t = (glm::dot(plane.getNormal(), point) - plane.getLength());
 	return point - t * plane.getNormal();
 }
 
-float distPointToPlane(vec3 point, Plane plane)
+float PhysicsEngine::distPointToPlane(vec3 point, Plane plane)
 {
 	plane.Normalized();
 	return (glm::dot(plane.getNormal(), point) - plane.getLength());
 }
-vec3 ClosestPointToOBB(vec3 point, OBB obb)
+vec3 PhysicsEngine::ClosestPointToOBB(vec3 point, OBB obb)
 {
 	vec3 d = point - obb.center;
 	vec3 res = obb.center;
@@ -65,7 +72,7 @@ vec3 ClosestPointToOBB(vec3 point, OBB obb)
 	return res;
 }
 
-float SqDistPointToOBB(vec3 point,OBB obb)
+float PhysicsEngine::SqDistPointToOBB(vec3 point,OBB obb)
 {
 	vec3 p = ClosestPointToOBB(point, obb);
 	return glm::dot(p - point, p - point);
