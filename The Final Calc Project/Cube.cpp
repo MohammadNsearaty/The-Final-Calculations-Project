@@ -14,9 +14,9 @@ Cube::Cube() {
 	length[0] = 1;
 	generateInteriaTensor();
 	iTensorInv = glm::inverse(iTensor);
+	generateOBB();
 }
-Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, float c1, float c2, float c3) {
-	
+Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, float c1, float c2, float c3) {	
 	mass = m;
 	position= vec3(x, y, z);
 	color= vec3(c1, c2, c3);
@@ -25,8 +25,14 @@ Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, flo
 	calcEdges();
 	generateInteriaTensor();
 	iTensorInv = glm::inverse(iTensor);
+	generateOBB();
 }
 
+void Cube::generateOBB()
+{
+	obb.center = this->position;
+	obb.edges = vec3(this->length[0]/2);
+}
 void Cube::generateInteriaTensor()
 {
 	float d =  2*(length[0] * length[0]);

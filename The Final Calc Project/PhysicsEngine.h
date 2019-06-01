@@ -8,7 +8,7 @@
 #include "Plane.h"
 using namespace std;
 
-#define EPSILON 0.000001
+#define EPSILON 1e-6
 class PhysicsEngine {
 private:
 	vector<Shapes*> Objects;
@@ -52,11 +52,11 @@ int PhysicsEngine::TestOBB(OBB &a, OBB &b)
 
 	// Compute translation vector t 
     	vec3 t = b.center - a.center; // Bring translation into a’s coordinate frame
-		t = vec3(glm::dot(t, a.u[0]), glm::dot(t, a.u[2]), glm::dot(t, a.u[2]));
+		t = vec3(glm::dot(t, a.u[0]), glm::dot(t, a.u[1]), glm::dot(t, a.u[2]));
 	// Compute common subexpressions. Add in an epsilon term to // counteract arithmetic errors when two edges are parallel and // their cross product is (near) null (see text for details)
 		for (int i = 0; i < 3;i++)
 			for (int j = 0; j < 3;j++)
-				AbsR[i][j] = glm::abs(R[i][j]) + EPSILON;
+				AbsR[i][j] = glm::abs(R[i][j]) + 1e-6;
 	// Test axes L = A0, L = A1, L = A2 
 		for (int i = 0; i < 3;i++) 
 		{ ra = a.edges[i];

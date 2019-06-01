@@ -11,6 +11,7 @@
 #include<math.h>
 #include"Cube.h"
 #include"Shpere.h"
+#include"PhysicsEngine.h"
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -32,8 +33,15 @@ double lX, lY;
 //when no key is being presses
 float deltaAngle = 0.0f;
 float deltaMove = 0;
+
+//the physics engine
+PhysicsEngine engine = PhysicsEngine();
 GLUquadric *glu = gluNewQuadric();
-Cube cube(glu,1,1,0,0,0,1,1,1);
+Cube cube1(glu, 0.3, 1, 0, 0, 0, 1, 1, 1);
+Cube cube2(glu, 0.3, 1, 1, 1, 0, 1, 1, 1);
+Shpere sp1(glu, 0.2, 1, 0, 0, 0, 1, 0, 0);
+Shpere sp2(glu, 0.2, 1, 0, 1, 0, 0, 1, 0);
+
 Shpere sp(glu,2,1,0,0,0,1,0,0);
 
 void camera();
@@ -43,8 +51,10 @@ void computeDir(float deltaAngle);
 void keyboard(int k, int x, int y);
 
 vec3 testForce = vec3(0.0007,0,0);
+vec3 virtualGravity = vec3(0, -0.001, 0);
 
 float mv = 0.001;
+int res = 0;
 void my_display_code()
 {
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
@@ -84,10 +94,12 @@ void my_display_code()
 	if(io.KeysDown[122]/*the Z key*/)
 		movZ += mv;
 
-
+	/*
 	ImGui::Text("MovX %f  MovY %f  MovZ %f", movX, movY, movZ);
 	ImGui::Text("Pitch  %f  Yaw %f  Roll %f", cube.getPitch(), cube.getYaw(), cube.getRoll());
 	ImGui::Text("mv rate %f", mv);
+*/
+	ImGui::Text("the Collision detection result %d", res);
 	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);   
 	
 	// Edit 1 float using a slider from 0.0f to 1.0f
@@ -97,11 +109,14 @@ void my_display_code()
 
 	glPushMatrix();
 	{
-		glScaled(0.1, 0.1, 0.1);
-		glTranslated(0,0, 0);
-		glColor3f(1.0f, 1.0f, 1.0f);
-		cube.simulateRotation(vec3(0.5f, 0.5f, 0.0f), testForce);
-		testForce = vec3(0, 0, 0);
+		sp2.applyForce(virtualGravity);
+		sp2.Integrate();
+		cube1.draw_3D();
+		sp2.draw_3D();
+		virtualGravity = vec3(0.0f);
+
+		 res = engine.TestOBB(cube1.getOBB(), sp2.getOBB());
+		 cout << res;
 	}
 	glPopMatrix();
 }

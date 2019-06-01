@@ -6,6 +6,7 @@ Shpere::Shpere() {
 	Longitudes = 20;
 	Latitudes = 20;
 	quadric1 = gluNewQuadric();
+	generateOBB();
 }
 Shpere::Shpere(GLUquadric *quadric, float r, float m, float x, float y, float z, float c1, float c2, float c3) {
 	Longitudes = 32;
@@ -15,6 +16,7 @@ Shpere::Shpere(GLUquadric *quadric, float r, float m, float x, float y, float z,
 	color = vec3(c1, c2, c3);
 	length[0] = r;
 	quadric1 = quadric;
+	generateOBB();
 }
 void Shpere::Draw_Shpere() {
 
@@ -22,6 +24,7 @@ void Shpere::Draw_Shpere() {
 void Shpere::generateOBB()
 {
 	obb.center = this->position;
+	obb.edges = vec3(length[0]/2);
 	
 }
 void Shpere::setRadius(float R)

@@ -68,6 +68,8 @@ public:
 	//generate the OBB for each body
 	virtual void generateOBB() {};
 	//
+	OBB getOBB() { return obb; }
+
 	void simulateRotation(vec3 point, vec3 force) {
 
 		vec3 res = pointTolocalAxis(point);
@@ -93,6 +95,7 @@ public:
 	}
 	void Integrate() {
 		position = position + speed;
+		obb.center = position;
 	}
 	vec3 getPostion() {
 		return position;

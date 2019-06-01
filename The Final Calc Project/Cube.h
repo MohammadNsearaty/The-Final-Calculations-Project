@@ -25,6 +25,7 @@ public:
 
 	void Collision2();
 
+	void generateOBB();
 
 
 };
