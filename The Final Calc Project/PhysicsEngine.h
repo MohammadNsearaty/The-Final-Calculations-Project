@@ -40,6 +40,36 @@ public:
 
 };
 
+vec3 ClosestPointToPlane(vec3 point, Plane plane)
+{
+	plane.Normalized();
+	float t = (glm::dot(plane.getNormal(), point) - plane.getLength());
+	return point - t * plane.getNormal();
+}
+
+float distPointToPlane(vec3 point, Plane plane)
+{
+	plane.Normalized();
+	return (glm::dot(plane.getNormal(), point) - plane.getLength());
+}
+vec3 ClosestPointToOBB(vec3 point, OBB obb)
+{
+	vec3 d = point - obb.center;
+	vec3 res = obb.center;
+
+	for (int i = 0; i < 3; i++)
+	{
+		float dist = glm::clamp(glm::dot(d,obb.u[i]),-obb.edges[i],obb.edges[i]);
+		res += dist * obb.u[i];
+	}
+	return res;
+}
+
+float SqDistPointToOBB(vec3 point,OBB obb)
+{
+	vec3 p = ClosestPointToOBB(point, obb);
+	return glm::dot(p - point, p - point);
+}
 int PhysicsEngine::TestOBB(OBB &a, OBB &b)
 {
 	float ra, rb;

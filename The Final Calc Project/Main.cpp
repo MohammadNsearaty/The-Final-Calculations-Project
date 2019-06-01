@@ -37,8 +37,8 @@ float deltaMove = 0;
 //the physics engine
 PhysicsEngine engine = PhysicsEngine();
 GLUquadric *glu = gluNewQuadric();
-Cube cube1(glu, 0.3, 1, 0, 0, 0, 1, 1, 1);
-Cube cube2(glu, 0.3, 1, 1, 1, 0, 1, 1, 1);
+Cube cube1(glu, 0.3, 1, 0, 0, 0, 1, 0, 1);
+Cube cube2(glu, 0.3, 1, -0.2, 1, 0, 1, 1, 1);
 Shpere sp1(glu, 0.2, 1, 0, 0, 0, 1, 0, 0);
 Shpere sp2(glu, 0.2, 1, 0, 1, 0, 0, 1, 0);
 
@@ -100,6 +100,7 @@ void my_display_code()
 	ImGui::Text("mv rate %f", mv);
 */
 	ImGui::Text("the Collision detection result %d", res);
+	ImGui::Text("pitch  %f , yaw %f , roll %f",cube2.getPitch(),cube2.getYaw(),cube2.getRoll());
 	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);   
 	
 	// Edit 1 float using a slider from 0.0f to 1.0f
@@ -109,13 +110,16 @@ void my_display_code()
 
 	glPushMatrix();
 	{
-		sp2.applyForce(virtualGravity);
-		sp2.Integrate();
+		cube2.simulateRotation(-vec3(0.1, 0, 0), testForce);
+
+
+		cube2.applyForce(virtualGravity);
+		cube2.Integrate();
 		cube1.draw_3D();
-		sp2.draw_3D();
+		cube2.draw_3D();
 		virtualGravity = vec3(0.0f);
 
-		 res = engine.TestOBB(cube1.getOBB(), sp2.getOBB());
+		 res = engine.TestOBB(cube1.getOBB(), cube2.getOBB());
 		 cout << res;
 	}
 	glPopMatrix();
