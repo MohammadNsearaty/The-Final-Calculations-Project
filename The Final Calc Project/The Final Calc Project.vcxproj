@@ -161,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AxisAlignBounding_Data.h" />
+    <ClInclude Include="CollisionInfo.h" />
     <ClInclude Include="Collision_Data.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="imconfig.h" />

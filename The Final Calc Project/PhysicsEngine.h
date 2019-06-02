@@ -6,6 +6,7 @@
 #include <vector>
 #include "Shape.h"
 #include "Plane.h"
+#include "CollisionInfo.h"
 using namespace std;
 
 #define EPSILON 1e-6
@@ -41,11 +42,28 @@ public:
 	float distPointToPlane(vec3 point, Plane plane);
 	vec3 ClosestPointToOBB(vec3 point, OBB obb);
 	float SqDistPointToOBB(vec3 point, OBB obb);
+	CollisionInfo ShepreAndOBB(vec3 point, float raduis, OBB obb);
 
 
 
 
 };
+
+CollisionInfo PhysicsEngine::ShepreAndOBB(vec3 point, float raduis, OBB obb)
+{
+	vec3 resP = this->ClosestPointToOBB(point,obb);
+	float tmp = sqrt(((resP.x - point.x)*(resP.x - point.x)) + ((resP.y - point.y)*(resP.y - point.y)) + ((resP.z - point.z)*(resP.z - point.z)));
+	if (tmp - raduis < 1e-6)
+	{
+		CollisionInfo res(raduis, true,resP);
+		return res;
+	}
+	else
+	{
+		CollisionInfo wrongRes(-1, false, resP);
+		return wrongRes;
+	}
+}
 
 vec3 PhysicsEngine::ClosestPointToPlane(vec3 point, Plane plane)
 {

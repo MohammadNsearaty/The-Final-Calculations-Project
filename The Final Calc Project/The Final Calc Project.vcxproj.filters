@@ -116,5 +116,8 @@
     <ClInclude Include="OBB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CollisionInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -12,6 +12,8 @@
 #include"Cube.h"
 #include"Shpere.h"
 #include"PhysicsEngine.h"
+
+#include<vector>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -39,8 +41,8 @@ PhysicsEngine engine = PhysicsEngine();
 GLUquadric *glu = gluNewQuadric();
 Cube cube1(glu, 2, 1, 0, 4, 0, 1, 0, 1);
 Cube cube2(glu, 2,1, 0, 0, 0, 1, 1, 1);
-Shpere sp1(glu, 0.2, 1, 0, 0, 0, 1, 0, 0);
-Shpere sp2(glu, 0.2, 1, 0, 1, 0, 0, 1, 0);
+Shpere sp1(glu, 1, 1, 0, 4, 0, 1, 0, 0);
+Shpere sp2(glu, 1, 1, 0, 0, 0, 0, 1, 0);
 
 Shpere sp(glu,2,1,0,0,0,1,0,0);
 
@@ -52,6 +54,7 @@ void keyboard(int k, int x, int y);
 
 vec3 testForce = vec3(0.0007,0,0);
 vec3 virtualGravity = vec3(0, -0.001, 0);
+CollisionInfo CRes(-1, false,vec3(0.0f));
 
 float mv = 0.001;
 int res = 0;
@@ -101,7 +104,8 @@ void my_display_code()
 	ImGui::Text("mv rate %f", mv);
 */
 	ImGui::Text("the Collision detection result %d", res);
-	ImGui::Text("The Distance is %f", dist);
+	vec3 p = CRes.getCollisionPoint();
+	ImGui::Text("The Collision Inforamtion dist :: %f , Is Collision  %d , point %f , %f , %f",CRes.getDist(),CRes.getIsCollision(),p.x,p.y,p.z );
 	ImGui::Text("pitch  %f , yaw %f , roll %f",cube1.getPitch(),cube1.getYaw(),cube1.getRoll());
 	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);   
 	
@@ -114,8 +118,8 @@ void my_display_code()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BITS);
 		glScaled(0.1, 0.1, 0.1);
-
-	dist = 	engine.SqDistPointToOBB(cube1.getPostion(),cube2.getOBB());
+		/*
+     	dist = 	engine.SqDistPointToOBB(cube1.getPostion(),cube2.getOBB());
 
 		cube1.simulateRotation(vec3(1, 1,0), testForce);
 		cube2.simulateRotation(vec3(1, 1, 0), testForce);
@@ -130,7 +134,15 @@ void my_display_code()
 		cube1.draw_3D();
 
 		 res = engine.TestOBB(cube1.getOBB(), cube2.getOBB());
-		 
+		 */
+		sp1.applyForce(virtualGravity);
+		sp1.Integrate();
+		virtualGravity = vec3(0.0f);
+		CRes = engine.ShepreAndOBB(sp1.getPostion(),sp1.getlength()[0],cube2.getOBB());
+		if (CRes.getIsCollision())
+			sp1.setSpeed(vec3(0.0f));
+		sp1.draw_3D();
+		cube2.draw_3D();
 	}
 	glPopMatrix();
 }
