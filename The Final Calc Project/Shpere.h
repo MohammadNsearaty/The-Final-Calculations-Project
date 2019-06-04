@@ -38,6 +38,7 @@ public:
 	}
 
 	void generateOBB();
+	void generateInteriaTensor();
 
 
 

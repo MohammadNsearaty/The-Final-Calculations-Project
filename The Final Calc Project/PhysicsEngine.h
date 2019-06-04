@@ -10,6 +10,7 @@
 using namespace std;
 
 #define EPSILON 1e-6
+#define colEpsilon 0.3f
 class PhysicsEngine {
 private:
 	vector<Shapes*> Objects;
@@ -42,20 +43,68 @@ public:
 	float distPointToPlane(vec3 point, Plane plane);
 	vec3 ClosestPointToOBB(vec3 point, OBB obb);
 	float SqDistPointToOBB(vec3 point, OBB obb);
-	CollisionInfo ShepreAndOBB(vec3 point, float raduis, OBB obb);
+	CollisionInfo ShepreAndOBB(Shapes s, OBB obb);
 
-
+	vec3 J(Shapes s1,Shapes s2,vec3 point);
 
 
 };
 
-CollisionInfo PhysicsEngine::ShepreAndOBB(vec3 point, float raduis, OBB obb)
+vec3 PhysicsEngine::J(Shapes s1, Shapes s2,vec3 point)
 {
+
+	mat3 Ia = s1.getOBB().u * s1.getITensor() * (glm::transpose(s1.getOBB().u));
+	vec3 omegaA = vec3(0.0f);
+	omegaA = glm::inverse(Ia) * s1.getAngularMomentoum();
+
+	mat3 Ib = s2.getOBB().u * s2.getITensor() * (glm::transpose(s2.getOBB().u));
+	vec3 omegaB = vec3(0.0f);
+	omegaB = glm::inverse(Ib) * s2.getAngularMomentoum();
+
+	vec3 ra = point - s1.getPostion();
+	vec3 rb = point - s2.getPostion();
+
+	vec3 Pa = s1.getSpeed() + glm::cross(omegaA, ra);
+	vec3 Pb = s2.getSpeed() + glm::cross(omegaB, rb);
+
+	vec3 n = glm::normalize(point);
+
+	vec3 Vrel = n * (Pa - Pb);
+
+
+
+	float ma = 1 / s1.getMass();
+	float mb = 1 / s1.getMass();
+
+	vec3 upTerm = (-1.0f)*(1.0f + colEpsilon) * Vrel;
+
+	vec3 c1 = n * (glm::inverse(Ia) * glm::cross(ra, n));
+	vec3 c2 = n * (glm::inverse(Ib) * glm::cross(rb, n));
+	vec3 downTerm = ma + mb + glm::cross(c1, ra) + glm::cross(c2, rb);
+
+
+	vec3 j = upTerm / downTerm;
+
+
+
+	return j;
+
+
+}
+CollisionInfo PhysicsEngine::ShepreAndOBB(Shapes s, OBB obb)
+{
+	/*
+	if (this->TestOBB(s.getOBB(), obb) == 0)
+	{
+		CollisionInfo res(0,false,vec3(0.0f));
+		return res;
+	}*/
+	vec3 point = s.getPostion();
 	vec3 resP = this->ClosestPointToOBB(point,obb);
 	float tmp = sqrt(((resP.x - point.x)*(resP.x - point.x)) + ((resP.y - point.y)*(resP.y - point.y)) + ((resP.z - point.z)*(resP.z - point.z)));
-	if (tmp - raduis < 1e-6)
+	if (tmp - s.getlength()[0] < 1e-6)
 	{
-		CollisionInfo res(raduis, true,resP);
+		CollisionInfo res(s.getlength()[0], true,resP);
 		return res;
 	}
 	else
@@ -84,6 +133,14 @@ vec3 PhysicsEngine::ClosestPointToOBB(vec3 point, OBB obb)
 
 	for (int i = 0; i < 3; i++)
 	{
+		/*float dist = glm::dot(d, obb.u[i]);
+		if (dist > obb.edges[i])
+			dist = obb.edges[i];
+		if (dist < -obb.edges[i])
+			dist = -obb.edges[i];
+		res += dist * obb.u[i];
+		*/
+		
 		float dist = glm::clamp(glm::dot(d,obb.u[i]),-obb.edges[i],obb.edges[i]);
 		res += dist * obb.u[i];
 	}

@@ -1,5 +1,5 @@
 #include"Shpere.h"
-
+#include<freeglut.h>
 
 Shpere::Shpere() {
 	length[0] = 4;
@@ -7,6 +7,8 @@ Shpere::Shpere() {
 	Latitudes = 20;
 	quadric1 = gluNewQuadric();
 	generateOBB();
+	generateInteriaTensor();
+	this->setType(0);
 }
 Shpere::Shpere(GLUquadric *quadric, float r, float m, float x, float y, float z, float c1, float c2, float c3) {
 	Longitudes = 32;
@@ -17,6 +19,8 @@ Shpere::Shpere(GLUquadric *quadric, float r, float m, float x, float y, float z,
 	length[0] = r;
 	quadric1 = quadric;
 	generateOBB();
+	generateInteriaTensor();
+	this->setType(0);
 }
 void Shpere::Draw_Shpere() {
 
@@ -24,8 +28,13 @@ void Shpere::Draw_Shpere() {
 void Shpere::generateOBB()
 {
 	obb.center = this->position;
-	obb.edges = vec3(length[0]/2);
+	obb.edges = vec3(length[0]);
 	
+}
+void Shpere::generateInteriaTensor()
+{
+	float res = (2.0f / 5.0f) * this->mass * (this->length[0]/2) * (this->length[0]/2);
+	this->iTensor[0][0] = this->iTensor[1][1] = this->iTensor[2][2] = res;
 }
 void Shpere::setRadius(float R)
 {
@@ -39,9 +48,12 @@ void Shpere::draw_3D() {
 	{
 		glColor3d(color.x, color.y, color.z);
 		glTranslatef(position.x, position.y, position.z);
-		gluSphere(quadric1, length[0], Longitudes, Latitudes);
 
-
+		glRotated(pitch, 1, 0, 0);
+		glRotated(yaw, 0, 1, 0);
+		glRotated(roll, 0, 0, 1);
+		//gluSphere(quadric1, length[0], Longitudes, Latitudes);
+		glutSolidSphere(length[0], 32, 32);
 		glColor3d(1, 1, 1);
 
 	}

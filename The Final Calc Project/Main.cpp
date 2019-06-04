@@ -39,9 +39,9 @@ float deltaMove = 0;
 //the physics engine
 PhysicsEngine engine = PhysicsEngine();
 GLUquadric *glu = gluNewQuadric();
-Cube cube1(glu, 2, 1, 0, 4, 0, 1, 0, 1);
-Cube cube2(glu, 2,1, 0, 0, 0, 1, 1, 1);
-Shpere sp1(glu, 1, 1, 0, 4, 0, 1, 0, 0);
+Cube cube1(glu, 2, 1, 1, 4, 0, 1, 0, 1);
+Cube cube2(glu, 2, 1, 4, 0, 0, 1, 1, 1);
+Shpere sp1(glu, 1, 1, 0, 0, 0, 1, 0, 0);
 Shpere sp2(glu, 1, 1, 0, 0, 0, 0, 1, 0);
 
 Shpere sp(glu,2,1,0,0,0,1,0,0);
@@ -53,7 +53,7 @@ void computeDir(float deltaAngle);
 void keyboard(int k, int x, int y);
 
 vec3 testForce = vec3(0.0007,0,0);
-vec3 virtualGravity = vec3(0, -0.001, 0);
+vec3 virtualGravity = vec3(0, -0.004, 0);
 CollisionInfo CRes(-1, false,vec3(0.0f));
 
 float mv = 0.001;
@@ -106,6 +106,7 @@ void my_display_code()
 	ImGui::Text("the Collision detection result %d", res);
 	vec3 p = CRes.getCollisionPoint();
 	ImGui::Text("The Collision Inforamtion dist :: %f , Is Collision  %d , point %f , %f , %f",CRes.getDist(),CRes.getIsCollision(),p.x,p.y,p.z );
+	ImGui::Text("cube speed %f  %f  %f   shpere speed  %f  %f  %f ", cube1.getSpeed().x , cube1.getSpeed().y, cube1.getSpeed().z, sp1.getSpeed().x, sp1.getSpeed().y, sp1.getSpeed().z);
 	ImGui::Text("pitch  %f , yaw %f , roll %f",cube1.getPitch(),cube1.getYaw(),cube1.getRoll());
 	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);   
 	
@@ -118,31 +119,49 @@ void my_display_code()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BITS);
 		glScaled(0.1, 0.1, 0.1);
-		/*
+	/*	
      	dist = 	engine.SqDistPointToOBB(cube1.getPostion(),cube2.getOBB());
 
-		cube1.simulateRotation(vec3(1, 1,0), testForce);
-		cube2.simulateRotation(vec3(1, 1, 0), testForce);
+		//cube1.simulateRotation(vec3(1, 1,0), testForce);
+		//cube2.simulateRotation(vec3(1, 1, 0), testForce);
 		testForce = vec3(0.0f);
 
-		cube1.applyForce(virtualGravity);
+		cube1.applyForce(virtualGravity,cube1.getPostion());
 		cube1.Integrate();
 
 		virtualGravity = vec3(0.0f);
 
 		cube2.draw_3D();
 		cube1.draw_3D();
-
+		
 		 res = engine.TestOBB(cube1.getOBB(), cube2.getOBB());
-		 */
-		sp1.applyForce(virtualGravity);
+		*/
+		cube1.applyForce(virtualGravity,cube1.getPostion());
+		//sp1.applyForce(-virtualGravity);
+		cube1.Integrate();
 		sp1.Integrate();
 		virtualGravity = vec3(0.0f);
-		CRes = engine.ShepreAndOBB(sp1.getPostion(),sp1.getlength()[0],cube2.getOBB());
+		int re = engine.TestOBB(sp1.getOBB(), cube1.getOBB());
+		CRes = engine.ShepreAndOBB(sp1,cube1.getOBB());
 		if (CRes.getIsCollision())
-			sp1.setSpeed(vec3(0.0f));
+		{
+			vec3 j = engine.J(sp1, cube1, CRes.getCollisionPoint());
+			vec3 n = glm::normalize(CRes.getCollisionPoint());
+			vec3 positiveJ = j*n;
+			vec3 minesJ = j*(-n);
+			cube1.applyForce(minesJ,CRes.getCollisionPoint());
+			sp1.applyForce(positiveJ, CRes.getCollisionPoint());
+			cube1.Integrate();
+
+			sp1.Integrate();
+			
+			//cube1.simulateRotation(CRes.getCollisionPoint(), j);
+			//sp1.applyForce(vec3(0.0f, -0.001f, 0.0f), sp1.getPostion());
+			//sp1.simulateRotation(CRes.getCollisionPoint(), -j);
+		}
+		
 		sp1.draw_3D();
-		cube2.draw_3D();
+		cube1.draw_3D();
 	}
 	glPopMatrix();
 }

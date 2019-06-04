@@ -16,6 +16,7 @@ Cube::Cube() {
 	generateInteriaTensor();
 	iTensorInv = glm::inverse(iTensor);
 	generateOBB();
+	this->setType(1);
 }
 Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, float c1, float c2, float c3) {	
 	mass = m;
@@ -27,6 +28,7 @@ Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, flo
 	generateInteriaTensor();
 	iTensorInv = glm::inverse(iTensor);
 	generateOBB();
+	this->setType(1);
 }
 
 void Cube::generateOBB()
@@ -58,11 +60,12 @@ void Cube::calcEdges()
 }
 
 void Cube::draw_3D() {
-	//glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BITS);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BITS);
 	glPushMatrix();
 	{
 		glTranslated(this->position.x, this->position.y, this->position.z);
 		glColor3d(color.x, color.y, color.z);
+		//this->simulateRotation(this->position, vec3(0.0f));
 		glRotated(pitch, 1, 0, 0);
 		glRotated(yaw, 0, 1, 0);
 		glRotated(roll, 0, 0, 1);

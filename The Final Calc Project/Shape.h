@@ -36,6 +36,8 @@ protected:
 	float roll;
 	//The Oriented Bounding Box
 	OBB obb;
+	//my variable
+	int type;
 
 public:
 	Shapes() {
@@ -53,8 +55,8 @@ public:
 		pitch = yaw = roll = 0.0f;
 
 		obb.u = mat3(0.0f);
-		obb.u[0][0] = obb.u[1][1] = obb.u[2][2] =  1.0f;
-		}
+		obb.u[0][0] = obb.u[1][1] = obb.u[2][2] = 1.0f;
+	}
 	Shapes(float Coordinates1, float Coordinates2, float Coordinates3, float Color1, float Color2, float Color3) {
 		position = vec3(Coordinates1, Coordinates2, Coordinates3);
 		color = vec3(Color1, Color2, Color3);
@@ -72,32 +74,47 @@ public:
 	virtual void generateOBB() {};
 	//
 	OBB getOBB() { return obb; }
+	mat3 getITensor() { return iTensor; }
+	vec3 getAngularMomentoum() { return angularMo; }
+	virtual void generateInteriaTensor() {};
 
-	void simulateRotation(vec3 point, vec3 force) {
-
+	//TODO:To move the Shapes
+	void applyForce(vec3 force,vec3 point) {
+		force = force / mass;
+		acc += force;
+		speed += acc;
 		vec3 res = pointTolocalAxis(point);
-		vec3 torque = glm::cross(res, force);
+		vec3 torque = glm::cross(point - position, force);
 		angularMo += torque;
+
+		acc = vec3(0.0f);
+	}
+	void setType(int t)
+	{
+		this->type = t;
+	}
+	int getType()
+	{
+		return this->type;
+	}
+	//void simulateRotation(vec3 point, vec3 force) {	}
+	void Integrate() {
+
+		//Linear Moves
+		position = position + speed;
+		obb.center = position;
+		//Angular Moves
 		mat3 I = obb.u * iTensor * (glm::transpose(obb.u));
 		vec3 omega = vec3(0.0f);
 		omega = glm::inverse(I) * angularMo;
-		
+
 		mat3 mat = star(omega);
 		obb.u += mat * obb.u;
-		
+
 		pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
 		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[1][2] * obb.u[1][2]) + (obb.u[2][2] * obb.u[2][2]))));
 		roll = glm::degrees(atan2(obb.u[1][0], obb.u[0][0]));
-	/*	glPushMatrix();
-		{
-		//	glTranslated(this->position.x, this->position.y, this->position.z);
-			
-			draw_3D();
-		}glPopMatrix();
-*/	}
-	void Integrate() {
-		position = position + speed;
-		obb.center = position;
+
 	}
 	vec3 getPostion() {
 		return position;
@@ -155,13 +172,7 @@ public:
 	//TODO:To draw 3D shapes
 	virtual void draw_3D() {};
 
-	//TODO:To move the Shapes
-	void applyForce(vec3 force) {
-		force = force / mass;
-		acc += force;
-		speed += acc;
-		acc = vec3(0.0f);
-	}
+	
 	mat3 star(vec3 v)
 	{
 		mat3 matrix = mat3(0.0f);
@@ -175,7 +186,7 @@ public:
 	}
 	vec3 pointTolocalAxis(vec3 point)
 	{
-		vec3 res = glm::transpose(obb.u) * point;
+		vec3 res = glm::inverse(obb.u) * point;
 		return res;
 	}
    void toEulerAngle(fquat q)
