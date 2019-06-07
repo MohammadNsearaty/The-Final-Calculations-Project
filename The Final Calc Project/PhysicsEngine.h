@@ -99,19 +99,31 @@ CollisionInfo PhysicsEngine::ShepreAndOBB(Shapes s, OBB obb)
 		CollisionInfo res(0,false,vec3(0.0f));
 		return res;
 	}*/
+
+	vec3 resPoint = this->ClosestPointToOBB(s.getPostion(), obb);
+	float dist = this->SqDistPointToOBB(s.getPostion(), obb);
+	float sqRaduis = s.getlength()[0] * s.getlength()[0];
+	if (dist - sqRaduis < 1e-10)
+	{
+		CollisionInfo result(s.getlength()[0], true, resPoint);
+		return result;
+	}/*
 	vec3 point = s.getPostion();
-	vec3 resP = this->ClosestPointToOBB(point,obb);
-	float tmp = sqrt(((resP.x - point.x)*(resP.x - point.x)) + ((resP.y - point.y)*(resP.y - point.y)) + ((resP.z - point.z)*(resP.z - point.z)));
-	if (tmp - s.getlength()[0] < 1e-6)
+	int re = this->TestOBB(s.getOBB(), obb);
+	if (re == 1)
 	{
-		CollisionInfo res(s.getlength()[0], true,resP);
+	//	float tmp = this->SqDistPointToOBB(point, obb);
+
+		vec3 resP = this->ClosestPointToOBB(point, obb);
+	//	if (glm::abs(tmp - (s.getlength()[0] * s.getlength()[0])) < 1e-4)
+	    CollisionInfo res(s.getlength()[0], true, resP);
 		return res;
-	}
-	else
-	{
-		CollisionInfo wrongRes(-1, false, resP);
-		return wrongRes;
-	}
+	}*/
+	CollisionInfo wrongRes(-1, false, vec3(0.0f));
+	return wrongRes;
+
+//	float tmp = sqrt(((resP.x - point.x)*(resP.x - point.x)) + ((resP.y - point.y)*(resP.y - point.y)) + ((resP.z - point.z)*(resP.z - point.z)));
+	
 }
 
 vec3 PhysicsEngine::ClosestPointToPlane(vec3 point, Plane plane)

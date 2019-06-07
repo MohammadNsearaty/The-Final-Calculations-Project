@@ -39,7 +39,7 @@ float deltaMove = 0;
 //the physics engine
 PhysicsEngine engine = PhysicsEngine();
 GLUquadric *glu = gluNewQuadric();
-Cube cube1(glu, 2, 1, 1, 4, 0, 1, 0, 1);
+Cube cube1(glu, 2, 1, 1.6, 4, 0, 1, 0, 1);
 Cube cube2(glu, 2, 1, 4, 0, 0, 1, 1, 1);
 Shpere sp1(glu, 1, 1, 0, 0, 0, 1, 0, 0);
 Shpere sp2(glu, 1, 1, 0, 0, 0, 0, 1, 0);
@@ -53,7 +53,7 @@ void computeDir(float deltaAngle);
 void keyboard(int k, int x, int y);
 
 vec3 testForce = vec3(0.0007,0,0);
-vec3 virtualGravity = vec3(0, -0.004, 0);
+vec3 virtualGravity = vec3(0, -0.003, 0);
 CollisionInfo CRes(-1, false,vec3(0.0f));
 
 float mv = 0.001;
@@ -136,24 +136,25 @@ void my_display_code()
 		
 		 res = engine.TestOBB(cube1.getOBB(), cube2.getOBB());
 		*/
-		cube1.applyForce(virtualGravity,cube1.getPostion());
-		//sp1.applyForce(-virtualGravity);
+		cube1.applyForce(virtualGravity,vec3(0.0f));
+	//	sp1.applyForce(-virtualGravity,sp1.getPostion());`
 		cube1.Integrate();
 		sp1.Integrate();
 		virtualGravity = vec3(0.0f);
-		int re = engine.TestOBB(sp1.getOBB(), cube1.getOBB());
+	//	int re = engine.TestOBB(sp1.getOBB(), cube1.getOBB());
 		CRes = engine.ShepreAndOBB(sp1,cube1.getOBB());
 		if (CRes.getIsCollision())
 		{
 			vec3 j = engine.J(sp1, cube1, CRes.getCollisionPoint());
+		
 			vec3 n = glm::normalize(CRes.getCollisionPoint());
 			vec3 positiveJ = j*n;
 			vec3 minesJ = j*(-n);
 			cube1.applyForce(minesJ,CRes.getCollisionPoint());
 			sp1.applyForce(positiveJ, CRes.getCollisionPoint());
-			cube1.Integrate();
+			//cube1.Integrate();
 
-			sp1.Integrate();
+		//	sp1.Integrate();
 			
 			//cube1.simulateRotation(CRes.getCollisionPoint(), j);
 			//sp1.applyForce(vec3(0.0f, -0.001f, 0.0f), sp1.getPostion());

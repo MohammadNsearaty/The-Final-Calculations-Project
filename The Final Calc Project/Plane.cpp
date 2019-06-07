@@ -4,7 +4,6 @@
 //#include"Shpere.h"
 Plane Plane::Normalized() {
 	float magnitude = glm::length(normal);
-
 	return Plane(normal / magnitude, length / magnitude);
 
 }

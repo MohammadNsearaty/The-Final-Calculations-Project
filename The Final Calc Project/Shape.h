@@ -38,6 +38,8 @@ protected:
 	OBB obb;
 	//my variable
 	int type;
+	//try this 
+	glm::fquat quat;
 
 public:
 	Shapes() {
@@ -53,9 +55,9 @@ public:
 		iTensorInv = mat3(0.0f);
 		mass = 0.0f;
 		pitch = yaw = roll = 0.0f;
-
-		obb.u = mat3(0.0f);
-		obb.u[0][0] = obb.u[1][1] = obb.u[2][2] = 1.0f;
+		quat = fquat(0, vec3(0, 1, 0));
+	//	obb.u = mat3(0.0f);
+		//obb.u[0][0] = obb.u[1][1] = obb.u[2][2] = 1.0f;
 	}
 	Shapes(float Coordinates1, float Coordinates2, float Coordinates3, float Color1, float Color2, float Color3) {
 		position = vec3(Coordinates1, Coordinates2, Coordinates3);
@@ -64,6 +66,7 @@ public:
 		mass = 0.0f;
 		speed = vec3(0, 0, 0);
 		angularMo = vec3(0, 0, 0);
+		quat = fquat(0, vec3(0, 1, 0));
 		//rotation[0][0] = rotation[1][1] = rotation[2][2] = 1;
 		iTensor = mat3(0.0f);
 		iTensorInv = mat3(0.0f);
@@ -84,9 +87,8 @@ public:
 		acc += force;
 		speed += acc;
 		vec3 res = pointTolocalAxis(point);
-		vec3 torque = glm::cross(point - position, force);
+		vec3 torque = glm::cross(res, force);
 		angularMo += torque;
-
 		acc = vec3(0.0f);
 	}
 	void setType(int t)
@@ -108,9 +110,13 @@ public:
 		vec3 omega = vec3(0.0f);
 		omega = glm::inverse(I) * angularMo;
 
+		//glm::fquat qOmega = fquat(0, omega);
+
+		//quat += (1.0f / 2.0f) * (qOmega * quat);
 		mat3 mat = star(omega);
 		obb.u += mat * obb.u;
 
+		//obb.u = glm::toMat3(quat);
 		pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
 		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[1][2] * obb.u[1][2]) + (obb.u[2][2] * obb.u[2][2]))));
 		roll = glm::degrees(atan2(obb.u[1][0], obb.u[0][0]));

@@ -10,7 +10,7 @@ private:
 	float dist;
 	bool isCollision;
 	vec3 collisionPoint;
-
+	vec3 normal;
 public:
 	CollisionInfo(float dist, bool b, vec3 point)
 	{
@@ -21,10 +21,12 @@ public:
 	void setDist(float dist) { this->dist = dist; }
 	void setIsCollision(bool b) { this->isCollision = b; }
 	void setCollisionPoint(vec3 point) { this->collisionPoint = point; }
+	void setNormal(vec3 n) { normal = n; }
 
 	float getDist() { return this->dist; }
 	bool getIsCollision() { return this->isCollision; }
 	vec3 getCollisionPoint() { return this->collisionPoint; }
+	vec3 getNormal() { return normal; }
 };
 #endif // !COLLISIONINFO_H
 
