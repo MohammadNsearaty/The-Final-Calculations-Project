@@ -86,11 +86,14 @@ public:
 		force = force / mass;
 		acc += force;
 		speed += acc;
+
 		vec3 res = pointTolocalAxis(point);
 		vec3 torque = glm::cross(res, force);
 		angularMo += torque;
 		acc = vec3(0.0f);
 	}
+	void setAngularMomentom(vec3 L) { this->angularMo = L; }
+	vec3 getAngularMomentom() { return this->angularMo; }
 	void setType(int t)
 	{
 		this->type = t;
@@ -120,7 +123,12 @@ public:
 		pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
 		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[1][2] * obb.u[1][2]) + (obb.u[2][2] * obb.u[2][2]))));
 		roll = glm::degrees(atan2(obb.u[1][0], obb.u[0][0]));
-
+		
+		/*pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
+		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[0][0] * obb.u[0][0]) + (obb.u[0][1] * obb.u[0][1]))));
+		float t1 = sin(pitch)*obb.u[2][0] - cos(pitch) * obb.u[1][0];
+		float t2 = cos(pitch) * obb.u[1][] - sin(pitch) * 
+		roll = glm::degrees();*/
 	}
 	vec3 getPostion() {
 		return position;

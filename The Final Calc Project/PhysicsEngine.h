@@ -45,85 +45,77 @@ public:
 	float SqDistPointToOBB(vec3 point, OBB obb);
 	CollisionInfo ShepreAndOBB(Shapes s, OBB obb);
 
-	vec3 J(Shapes s1,Shapes s2,vec3 point);
+	vec3 J(Shapes &s1,Shapes &s2,CollisionInfo info);
 
 
 };
 
-vec3 PhysicsEngine::J(Shapes s1, Shapes s2,vec3 point)
+vec3 PhysicsEngine::J(Shapes &s1, Shapes &s2,CollisionInfo info)
 {
 
-	mat3 Ia = s1.getOBB().u * s1.getITensor() * (glm::transpose(s1.getOBB().u));
+	mat3 Ia = s1.getOBB().u * (glm::inverse(s1.getITensor())) * (glm::transpose(s1.getOBB().u));
 	vec3 omegaA = vec3(0.0f);
 	omegaA = glm::inverse(Ia) * s1.getAngularMomentoum();
 
-	mat3 Ib = s2.getOBB().u * s2.getITensor() * (glm::transpose(s2.getOBB().u));
+	mat3 Ib = s2.getOBB().u * (glm::inverse(s2.getITensor()))* (glm::transpose(s2.getOBB().u));
 	vec3 omegaB = vec3(0.0f);
 	omegaB = glm::inverse(Ib) * s2.getAngularMomentoum();
 
-	vec3 ra = point - s1.getPostion();
-	vec3 rb = point - s2.getPostion();
+	vec3 Pa = s1.pointTolocalAxis(info.getCollisionPoint());
+	vec3 Pb = s2.pointTolocalAxis(info.getCollisionPoint());
+	vec3 ra = Pa - s1.getPostion();
+	vec3 rb = Pb- s2.getPostion();
 
-	vec3 Pa = s1.getSpeed() + glm::cross(omegaA, ra);
-	vec3 Pb = s2.getSpeed() + glm::cross(omegaB, rb);
+	vec3 dPa = s1.getSpeed() + glm::cross(omegaA, ra);
+	vec3 dPb = s2.getSpeed() + glm::cross(omegaB, rb);
 
-	vec3 n = glm::normalize(point);
+	vec3 n = info.getNormal();
 
-	vec3 Vrel = n * (Pa - Pb);
+	vec3 Vrel = n * (dPa - dPb);
 
 
 
 	float ma = 1 / s1.getMass();
-	float mb = 1 / s1.getMass();
+	float mb = 1 / s2.getMass();
 
 	vec3 upTerm = (-1.0f)*(1.0f + colEpsilon) * Vrel;
 
-	vec3 c1 = n * (glm::inverse(Ia) * glm::cross(ra, n));
-	vec3 c2 = n * (glm::inverse(Ib) * glm::cross(rb, n));
+	vec3 c1 = n *( Ia * glm::cross(ra, n));
+	vec3 c2 = n * (Ib* glm::cross(rb, n));
 	vec3 downTerm = ma + mb + glm::cross(c1, ra) + glm::cross(c2, rb);
 
 
 	vec3 j = upTerm / downTerm;
 
+/*	vec3 force = j*n;
 
+	s1.setAcc(s1.getAcc() + (force / s1.getMass()));
+	s2.setAcc(s2.getAcc() + (force / s2.getMass()));
 
+	vec3 re1 = glm::cross(ra,force);
+	vec3 re2 = glm::cross(rb,force);
+	s1.setAngularMomentom(s1.getAngularMomentom() + re1);
+	s2.setAngularMomentom(s2.getAngularMomentom() - re2);
+	*/
 	return j;
 
 
 }
 CollisionInfo PhysicsEngine::ShepreAndOBB(Shapes s, OBB obb)
 {
-	/*
-	if (this->TestOBB(s.getOBB(), obb) == 0)
-	{
-		CollisionInfo res(0,false,vec3(0.0f));
-		return res;
-	}*/
-
 	vec3 resPoint = this->ClosestPointToOBB(s.getPostion(), obb);
-	float dist = this->SqDistPointToOBB(s.getPostion(), obb);
+	//float dist = this->SqDistPointToOBB(s.getPostion(), obb);
+	float dist = glm::dot(resPoint - s.getPostion(), resPoint - s.getPostion());
 	float sqRaduis = s.getlength()[0] * s.getlength()[0];
-	if (dist - sqRaduis < 1e-10)
+	if (dist - sqRaduis < 1e-6)
 	{
 		CollisionInfo result(s.getlength()[0], true, resPoint);
+		vec3 n = glm::normalize(resPoint - s.getPostion());
+		result.setNormal(n);
 		return result;
-	}/*
-	vec3 point = s.getPostion();
-	int re = this->TestOBB(s.getOBB(), obb);
-	if (re == 1)
-	{
-	//	float tmp = this->SqDistPointToOBB(point, obb);
-
-		vec3 resP = this->ClosestPointToOBB(point, obb);
-	//	if (glm::abs(tmp - (s.getlength()[0] * s.getlength()[0])) < 1e-4)
-	    CollisionInfo res(s.getlength()[0], true, resP);
-		return res;
-	}*/
+	}
 	CollisionInfo wrongRes(-1, false, vec3(0.0f));
 	return wrongRes;
-
-//	float tmp = sqrt(((resP.x - point.x)*(resP.x - point.x)) + ((resP.y - point.y)*(resP.y - point.y)) + ((resP.z - point.z)*(resP.z - point.z)));
-	
 }
 
 vec3 PhysicsEngine::ClosestPointToPlane(vec3 point, Plane plane)
