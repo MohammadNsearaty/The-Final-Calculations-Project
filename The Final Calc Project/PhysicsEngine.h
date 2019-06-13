@@ -45,8 +45,9 @@ public:
 	float SqDistPointToOBB(vec3 point, OBB obb);
 	CollisionInfo ShepreAndOBB(Shapes s, OBB obb);
 
-	vec3 J(Shapes &s1,Shapes &s2,CollisionInfo info);
+	vec3 J(Shapes s1,Shapes s2,CollisionInfo info);
 	void resetCollisionInfo(CollisionInfo *info);
+	CollisionInfo ShereVsShpere(Shapes s1, Shapes s2);
 
 };
 
@@ -62,7 +63,7 @@ void PhysicsEngine::resetCollisionInfo(CollisionInfo *info)
 	}
 }
 
-vec3 PhysicsEngine::J(Shapes &s1, Shapes &s2,CollisionInfo info)
+vec3 PhysicsEngine::J(Shapes s1, Shapes s2,CollisionInfo info)
 {
 
 	mat3 Ia = s1.getOBB().u * (glm::inverse(s1.getITensor())) * (glm::transpose(s1.getOBB().u));
@@ -72,9 +73,8 @@ vec3 PhysicsEngine::J(Shapes &s1, Shapes &s2,CollisionInfo info)
 	mat3 Ib = s2.getOBB().u * (glm::inverse(s2.getITensor()))* (glm::transpose(s2.getOBB().u));
 	vec3 omegaB = vec3(0.0f);
 	omegaB = glm::inverse(Ib) * s2.getAngularMomentoum();
-
-	vec3 Pa = s1.pointTolocalAxis(info.getCollisionPoint());
-	vec3 Pb = s2.pointTolocalAxis(info.getCollisionPoint());
+	vec3 Pa = s1.pointTolocalAxis(info.points[0]);
+	vec3 Pb = s2.pointTolocalAxis(info.points[0]);
 	vec3 ra = Pa - s1.getPostion();
 	vec3 rb = Pb- s2.getPostion();
 
@@ -92,26 +92,46 @@ vec3 PhysicsEngine::J(Shapes &s1, Shapes &s2,CollisionInfo info)
 
 	vec3 upTerm = (-1.0f)*(1.0f + colEpsilon) * Vrel;
 
-	vec3 c1 = n *( Ia * glm::cross(ra, n));
+	vec3 cr1 = glm::cross(ra, n);
+	vec3 c1 = n *( Ia * cr1);
 	vec3 c2 = n * (Ib* glm::cross(rb, n));
-	vec3 downTerm = ma + mb + glm::cross(c1, ra) + glm::cross(c2, rb);
+
+
+	vec3 cross1 = glm::cross(c1, ra);
+	vec3 cross2 = glm::cross(c2, rb);
+	vec3 downTerm = ma + mb + cross1 +cross2;
 
 
 	vec3 j = upTerm / downTerm;
 
-/*	vec3 force = j*n;
-
-	s1.setAcc(s1.getAcc() + (force / s1.getMass()));
-	s2.setAcc(s2.getAcc() + (force / s2.getMass()));
-
-	vec3 re1 = glm::cross(ra,force);
-	vec3 re2 = glm::cross(rb,force);
-	s1.setAngularMomentom(s1.getAngularMomentom() + re1);
-	s2.setAngularMomentom(s2.getAngularMomentom() - re2);
-	*/
 	return j;
 
 
+}
+CollisionInfo PhysicsEngine::ShereVsShpere(Shapes sp1, Shapes sp2)
+{
+	CollisionInfo res;
+	resetCollisionInfo(&res);
+	float r = sp1.getlength()[0] + sp1.getlength()[0];
+	vec3 d = sp2.getPostion() - sp1.getPostion();
+	float l = length(d);
+	l = l*l;
+	if (l - r*r > 0 || glm::length(d) == 0.0f)
+		return res;
+
+	
+	res.setIsCollision(true);
+	float dist = glm::abs(length(d) - r) * 0.5f;
+	if (dist < 1e-3)
+		dist = 0.0f;
+	res.setDist(dist);
+	d = normalize(d);
+	res.setNormal(d);
+	float dpt = sp1.getlength()[0] - dist;
+	vec3 point = sp1.getPostion() + d * dpt;
+	res.points.push_back(point);
+
+	return res;
 }
 CollisionInfo PhysicsEngine::ShepreAndOBB(Shapes s, OBB obb)
 {

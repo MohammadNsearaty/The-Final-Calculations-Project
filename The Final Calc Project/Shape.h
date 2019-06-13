@@ -200,7 +200,7 @@ public:
 	}
 	vec3 pointTolocalAxis(vec3 point)
 	{
-		vec3 res = glm::inverse(obb.u) * point;
+		vec3 res = glm::transpose(obb.u) * point;
 		//res = glm::reflect(res, vec3(position.x,0.0f,position.z));
 		res.x = -res.x;
 		return res;
