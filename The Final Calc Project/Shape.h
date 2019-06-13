@@ -113,13 +113,13 @@ public:
 		vec3 omega = vec3(0.0f);
 		omega = glm::inverse(I) * angularMo;
 
-		//glm::fquat qOmega = fquat(0, omega);
+		glm::fquat qOmega = fquat(0, omega);
 
-		//quat += (1.0f / 2.0f) * (qOmega * quat);
-		mat3 mat = star(omega);
-		obb.u += mat * obb.u;
+		quat += (1.0f / 2.0f) * (qOmega * quat);
+	//	mat3 mat = star(omega);
+		//obb.u += mat * obb.u;
 
-		//obb.u = glm::toMat3(quat);
+		obb.u = glm::toMat3(quat);
 		pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
 		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[1][2] * obb.u[1][2]) + (obb.u[2][2] * obb.u[2][2]))));
 		roll = glm::degrees(atan2(obb.u[1][0], obb.u[0][0]));
@@ -201,6 +201,8 @@ public:
 	vec3 pointTolocalAxis(vec3 point)
 	{
 		vec3 res = glm::inverse(obb.u) * point;
+		//res = glm::reflect(res, vec3(position.x,0.0f,position.z));
+		res.x = -res.x;
 		return res;
 	}
    void toEulerAngle(fquat q)

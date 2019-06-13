@@ -12,6 +12,8 @@ private:
 	vec3 collisionPoint;
 	vec3 normal;
 public:
+	vector<vec3> points;
+public:
 	CollisionInfo(float dist, bool b, vec3 point)
 	{
 		this->dist = dist;

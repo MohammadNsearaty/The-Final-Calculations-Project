@@ -10,7 +10,7 @@
 using namespace std;
 
 #define EPSILON 1e-6
-#define colEpsilon 0.3f
+#define colEpsilon 0.9f
 class PhysicsEngine {
 private:
 	vector<Shapes*> Objects;
@@ -46,9 +46,21 @@ public:
 	CollisionInfo ShepreAndOBB(Shapes s, OBB obb);
 
 	vec3 J(Shapes &s1,Shapes &s2,CollisionInfo info);
-
+	void resetCollisionInfo(CollisionInfo *info);
 
 };
+
+
+void PhysicsEngine::resetCollisionInfo(CollisionInfo *info)
+{
+	if (info != 0)
+	{
+		info->setDist(0.0f);
+		info->setIsCollision(false);
+		info->setNormal(vec3(0, 0, 1));
+		info->points.clear();
+	}
+}
 
 vec3 PhysicsEngine::J(Shapes &s1, Shapes &s2,CollisionInfo info)
 {

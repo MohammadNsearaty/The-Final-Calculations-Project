@@ -39,9 +39,14 @@ float deltaMove = 0;
 //the physics engine
 PhysicsEngine engine = PhysicsEngine();
 GLUquadric *glu = gluNewQuadric();
-Cube cube1(glu, 2, 1, -1.2, 4, 0, 1, 0, 1);
-Cube cube2(glu, 2, 1, 4, 0, 0, 1, 1, 1);
+Cube cube1(glu, 2, 1, 0, 4, 1.4, 1, 0, 1);
 Shpere sp1(glu, 1, 1, 0, 0, 0, 1, 0, 0);
+
+
+
+
+
+Cube cube2(glu, 2, 1, 4, 0, 0, 1, 1, 1);
 Shpere sp2(glu, 1, 1, 0, 0, 0, 0, 1, 0);
 
 Shpere sp(glu,2,1,0,0,0,1,0,0);
@@ -148,7 +153,8 @@ void my_display_code()
 		if (CRes.getIsCollision())
 		{
 			vec3 j = engine.J(sp1, cube1, CRes);
-			j.x = -j.x;
+		//	j.x = -j.x;
+			//j = 2.0f*j;
 			//vec3 n = glm::normalize(CRes.getCollisionPoint());
 			vec3 positiveJ = j * CRes.getNormal();
 			vec3 minesJ = j*(- CRes.getNormal());
