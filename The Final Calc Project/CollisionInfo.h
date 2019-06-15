@@ -7,7 +7,7 @@ using namespace glm;
 class CollisionInfo
 {
 private:
-	float dist;
+	float depth;
 	bool isCollision;
 	vec3 collisionPoint;
 	vec3 normal;
@@ -16,16 +16,16 @@ public:
 	CollisionInfo(){}
 	CollisionInfo(float dist, bool b, vec3 point)
 	{
-		this->dist = dist;
+		this->depth= dist;
 		this->isCollision = b; 
 		this->collisionPoint = point;
 	}
-	void setDist(float dist) { this->dist = dist; }
+	void setDepth(float dist) { this->depth = dist; }
 	void setIsCollision(bool b) { this->isCollision = b; }
 	void setCollisionPoint(vec3 point) { this->collisionPoint = point; }
 	void setNormal(vec3 n) { normal = n; }
 
-	float getDist() { return this->dist; }
+	float getDepth() { return this->depth; }
 	bool getIsCollision() { return this->isCollision; }
 	vec3 getCollisionPoint() { return this->collisionPoint; }
 	vec3 getNormal() { return normal; }
