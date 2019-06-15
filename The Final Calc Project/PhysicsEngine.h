@@ -109,13 +109,24 @@ CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 
 	result.points.insert(result.points.end(), c1.begin(), c1.end());
 	result.points.insert(result.points.end(), c2.begin(), c2.end());
+	
 	Interval interval = o1.getInterval(axis);
 	float distance = (interval.getMax() - interval.getMin()) * 0.5f - result.getDepth() * 0.5f;
 	vec3 POnPlane = o1.center + axis * distance;
-	for (int j = result.points.size() - 1; j >= 0; j--)
+	for (int i = result.points.size() - 1; i >= 0; i--)
 	{
-		vec3 contact = result.points[j];
-		result.points[j] = contact + (axis * dot(axis, POnPlane - contact));
+		vec3 contact = result.points[i];
+		result.points[i] = contact + (axis * dot(axis, POnPlane - contact));
+		//delete the duplicated points
+		for (int j = result.points.size() - 1; j > i; j--)
+		{
+			float l = glm::length(result.points[j] - result.points[i]);
+			if (l*l < 0.0001f)
+			{
+				result.points.erase(result.points.begin() + j);
+				break;
+			}
+		}
 	}
 	result.setIsCollision(true);
 	result.setNormal(axis);
