@@ -3,7 +3,7 @@
 #define INTERVAL_H
 class Interval
 {
-private:
+public:
 	float min;
 	float max;
 

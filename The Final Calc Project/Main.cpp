@@ -39,14 +39,10 @@ float deltaMove = 0;
 //the physics engine
 PhysicsEngine engine = PhysicsEngine();
 GLUquadric *glu = gluNewQuadric();
-Cube cube1(glu, 2, 1, 0, 4, 1.4, 1, 0, 1);
+Cube cube1(glu, 1, 1, 0.5, 6, 0, 1, 0, 1);
+Cube cube2(glu, 1, 1, 0, 0, 0, 1, 1, 1);
 Shpere sp1(glu, 1, 1, 0, 0, 0, 1, 0, 0);
 Shpere sp2(glu, 1, 1, 0.9, 6, 0, 0, 1, 0);
-
-
-
-
-Cube cube2(glu, 2, 1, 4, 0, 0, 1, 1, 1);
 
 
 Shpere sp(glu,2,1,0,0,0,1,0,0);
@@ -58,8 +54,8 @@ void computeDir(float deltaAngle);
 void keyboard(int k, int x, int y);
 
 vec3 testForce = vec3(0.0007,0,0);
-vec3 virtualGravity = vec3(0, -0.00001, 0);
-CollisionInfo res = engine.ShereVsShpere(sp1, sp2);
+vec3 virtualGravity = vec3(0, -0.002, 0);
+//CollisionInfo res = engine.ShereVsShpere(sp1, sp2);
 
 //CollisionInfo CRes(-1, false,vec3(0.0f));
 
@@ -110,7 +106,7 @@ void my_display_code()
 	ImGui::Text("Pitch  %f  Yaw %f  Roll %f", cube.getPitch(), cube.getYaw(), cube.getRoll());
 	ImGui::Text("mv rate %f", mv);
 */
-	ImGui::Text("the Collision detection result %d", res.getIsCollision());
+//	ImGui::Text("the Collision detection result %d", res.getIsCollision());
 	ImGui::Text("shpere speed x:%f  y:%f  z:%f",sp2.getSpeed().x, sp2.getSpeed().y, sp2.getSpeed().z);
 //	vec3 p = CRes.getCollisionPoint();
 //	ImGui::Text("The Collision Inforamtion dist :: %f , Is Collision  %d , point %f , %f , %f",CRes.getDist(),CRes.getIsCollision(),p.x,p.y,p.z );
@@ -128,14 +124,38 @@ void my_display_code()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BITS);
 		glScaled(0.1, 0.1, 0.1);
 	
+
+		cube1.applyForce(virtualGravity, cube1.getPostion());
+		virtualGravity = vec3(0.0f);
+		cube1.Integrate();
+		cube2.Integrate();
+
+		CollisionInfo result = engine.ObbVsOBB(cube1.getOBB(), cube2.getOBB());
+		if (result.getIsCollision())
+		{
+			for (int i = 0; i < result.points.size(); i++) {
+				CollisionInfo tmp = CollisionInfo(result);
+				tmp.points.clear();
+				tmp.points.push_back(result.points[i]);
+				vec3 j = engine.J(cube1, cube2, tmp);
+				vec3 force1 = j*result.getNormal();
+				vec3 force2 = j * (-result.getNormal());
+				force1 = force1 * 2.0f;
+				force2 = force2 * 2.0f;
+				cube1.applyForce(force1,result.points[i]);
+				cube1.Integrate();
+				cube2.applyForce(force2, result.points[i]);
+				cube2.Integrate();
+			}
+		}
+		cube1.draw_3D();
+		cube2.draw_3D();
+
+
+		/*shpere and shpere Test
 		sp2.applyForce(virtualGravity, sp1.getPostion());
 		sp2.Integrate();
-
-
-
 		res = engine.ShereVsShpere(sp1, sp2);
-
-
 		if (res.getIsCollision())
 		{
 			vec3 j = engine.J(sp1, sp2, res);
@@ -148,6 +168,7 @@ void my_display_code()
 		sp1.Integrate();
 		sp1.draw_3D();
 		sp2.draw_3D();
+		*/
 		/* cube and shpere test
 		cube1.applyForce(virtualGravity,vec3(0.0f));
 		cube1.Integrate();

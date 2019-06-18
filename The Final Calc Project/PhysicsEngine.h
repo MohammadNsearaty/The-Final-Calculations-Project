@@ -11,7 +11,8 @@
 using namespace std;
 
 #define EPSILON 1e-6
-#define colEpsilon 0.9f
+#define colEpsilon 0.3f
+#define MAX 1e6
 class PhysicsEngine {
 private:
 	vector<Shapes*> Objects;
@@ -53,7 +54,7 @@ public:
 	//OBB Vs OBB auxillary methods
 	bool ClipToPlane(Plane plane, Line line, vec3* outPoint);
 	std::vector<vec3> ClipEdgesToOBB(std::vector<Line> edges, OBB obb);
-	float PentrationDepth(OBB o1, OBB o2, vec3 axis, bool* outShouldFlip);
+	float PentrationDepth(OBB o1, OBB o2,const vec3 axis, bool* outShouldFlip);
 	CollisionInfo ObbVsOBB(OBB o1, OBB o2);
 
 };
@@ -77,7 +78,8 @@ CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 		test[6 + i * 3 + 2] = cross(test[i], test[2]);
 	}
 	//tmp value for the direction of the collision Normal
-	vec3* hitNormal;
+	vec3 hitNormal;
+	bool hit = false;
 	bool shouldFlip;
 	//loop through the 15 axis 
 	for (int i = 0; i < 15; i++)
@@ -97,12 +99,13 @@ CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 				test[i] = test[i] * -1.0f;
 			}
 			result.setDepth(depth);
-			hitNormal = &test[i];
+			hitNormal = vec3(test[i]);
+			hit = true;
 		}
 	}
-	if (hitNormal == 0)
+	if (hit == false)
 		return result;
-	vec3 axis = glm::normalize(*hitNormal);
+	vec3 axis = glm::normalize(hitNormal);
 	std::vector<vec3> c1 = this->ClipEdgesToOBB(o2.getEdges(), o1);
 	std::vector<vec3> c2 = this->ClipEdgesToOBB(o1.getEdges(), o2);
 	result.points.reserve(c1.size() + c2.size());
@@ -133,7 +136,7 @@ CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 	return result;
 
 }
-float PhysicsEngine::PentrationDepth(OBB o1, OBB o2, vec3 axis, bool* outShouldFlip)
+float PhysicsEngine::PentrationDepth(OBB o1, OBB o2, const vec3 axis, bool* outShouldFlip)
 {
 	Interval i1 = o1.getInterval(glm::normalize(axis));
 	Interval i2 = o2.getInterval(glm::normalize(axis));
@@ -196,7 +199,7 @@ void PhysicsEngine::resetCollisionInfo(CollisionInfo *info)
 {
 	if (info != 0)
 	{
-		info->setDepth(0.0f);
+		info->setDepth(MAX);
 		info->setIsCollision(false);
 		info->setNormal(vec3(0, 0, 1));
 		info->points.clear();

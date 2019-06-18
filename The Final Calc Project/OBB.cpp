@@ -83,10 +83,13 @@ Interval OBB::getInterval(vec3 axis)
 	for (int i = 0; i < 8; i++)
 	{
 		float projection = dot(axis, vertices[i]);
-		if (result.getMin() > projection)
+		result.min = (projection < result.min) ? projection : result.min;      
+		result.max = (projection > result.max) ? projection : result.max;
+	/*	if (result.getMin() > projection)
 			result.setMin(projection);
 		if (result.getMax() < projection)
 			result.setMax(projection);
+			*/
 	}
 	return result;
 }

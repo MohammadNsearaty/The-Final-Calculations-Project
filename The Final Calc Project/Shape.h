@@ -87,7 +87,10 @@ public:
 		acc += force;
 		speed += acc;
 
-		vec3 res = pointTolocalAxis(point);
+
+
+		//vec3 res = pointTolocalAxis(point);
+		vec3 res = point - position;
 		vec3 torque = glm::cross(res, force);
 		angularMo += torque;
 		acc = vec3(0.0f);
@@ -116,7 +119,7 @@ public:
 		glm::fquat qOmega = fquat(0, omega);
 
 		quat += (1.0f / 2.0f) * (qOmega * quat);
-	//	mat3 mat = star(omega);
+		//mat3 mat = star(omega);
 		//obb.u += mat * obb.u;
 
 		obb.u = glm::toMat3(quat);
@@ -200,9 +203,7 @@ public:
 	}
 	vec3 pointTolocalAxis(vec3 point)
 	{
-		vec3 res = glm::transpose(obb.u) * point;
-		//res = glm::reflect(res, vec3(position.x,0.0f,position.z));
-		res.x = -res.x;
+		vec3 res = glm::inverse(obb.u) * point;
 		return res;
 	}
    void toEulerAngle(fquat q)
