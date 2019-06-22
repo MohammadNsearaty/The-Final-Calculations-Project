@@ -57,6 +57,9 @@
     <ClCompile Include="OBB.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="OcTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Collision_Data.h">
@@ -123,6 +126,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Plane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BoundingBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OcTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

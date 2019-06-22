@@ -55,6 +55,10 @@ void keyboard(int k, int x, int y);
 
 vec3 testForce = vec3(0.0007,0,0);
 vec3 virtualGravity = vec3(0, -0.002, 0);
+OBB o1 = cube1.getOBB();
+OBB o2 = cube2.getOBB();
+std::vector<Line> e1 = o1.getEdges();
+std::vector<Line> e2 = o2.getEdges();
 //CollisionInfo res = engine.ShereVsShpere(sp1, sp2);
 
 //CollisionInfo CRes(-1, false,vec3(0.0f));
@@ -65,8 +69,8 @@ float dist = 0.0;
 void my_display_code()
 {
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-		//if (show_demo_window)
-	//	ImGui::ShowDemoWindow(&show_demo_window);
+	//	if (show_demo_window)
+		//ImGui::ShowDemoWindow(&show_demo_window);
 
 
 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
@@ -78,7 +82,10 @@ void my_display_code()
 
 
 	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+					
 															//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+	if (io.KeysDown[111])/*ImGui::Button("O") to Close Game Mode*/
+		glutLeaveGameMode();
 	if ( io.KeysDown[119] /*ImGui::Button("  W  ")*/)
 		movY += mv;
 	if (io.KeysDown[115]  /*ImGui::Button("  S  ")*/)
@@ -123,9 +130,8 @@ void my_display_code()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BITS);
 		glScaled(0.1, 0.1, 0.1);
-	
-
-		cube1.applyForce(virtualGravity, cube1.getPostion());
+		vec3 tmp = vec3(cube1.getPostion().x - 0.5, cube1.getPostion().y, cube1.getPostion().z);
+		cube1.applyForce(virtualGravity, tmp);
 		virtualGravity = vec3(0.0f);
 		cube1.Integrate();
 		cube2.Integrate();
@@ -150,7 +156,7 @@ void my_display_code()
 		}
 		cube1.draw_3D();
 		cube2.draw_3D();
-
+		
 
 		/*shpere and shpere Test
 		sp2.applyForce(virtualGravity, sp1.getPostion());
@@ -194,7 +200,6 @@ void my_display_code()
 
 void glut_display_func()
 {
-	glClear(GL_COLOR_BUFFER_BIT);
 
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL2_NewFrame();
@@ -232,11 +237,17 @@ int main(int argc, char** argv)
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_MULTISAMPLE);
 	glutInitWindowSize(1200, 720);
 	glutCreateWindow("Dear ImGui GLUT+OpenGL2 Example");
-
-
+	glClear(GL_COLOR_BUFFER_BIT);
+//	glutGameModeString("800x600:32");
+	if (glutGameModeGet(GLUT_GAME_MODE_POSSIBLE))
+	{
+		glutEnterGameMode();
+	}
+	
 	// Setup GLUT display function
 	// We will also call ImGui_ImplGLUT_InstallFuncs() to get all the other functions installed for us,
 	// otherwise it is possible to install our own functions and call the imgui_impl_glut.h functions ourselves.
+
 	glutDisplayFunc(glut_display_func);
 	glutReshapeFunc(reshape);
 	glutTimerFunc(0, timer, 0);

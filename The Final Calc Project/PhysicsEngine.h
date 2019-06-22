@@ -107,7 +107,8 @@ CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 		return result;
 	vec3 axis = glm::normalize(hitNormal);
 	std::vector<vec3> c1 = this->ClipEdgesToOBB(o2.getEdges(), o1);
-	std::vector<vec3> c2 = this->ClipEdgesToOBB(o1.getEdges(), o2);
+	std::vector<Line> edge1 = o1.getEdges();
+	std::vector<vec3> c2 = this->ClipEdgesToOBB(edge1, o2);
 	result.points.reserve(c1.size() + c2.size());
 
 	result.points.insert(result.points.end(), c1.begin(), c1.end());
@@ -167,7 +168,7 @@ float PhysicsEngine::PentrationDepth(OBB o1, OBB o2, const vec3 axis, bool* outS
 std::vector<vec3> PhysicsEngine::ClipEdgesToOBB(std::vector<Line> edges, OBB obb)
 {
 	std::vector<vec3> result;
-	result.reserve(edges.size());
+	//result.reserve(edges.size());
 	vec3 intersection;
 	std::vector<Plane> planes = obb.getPlanes();
 	for (int i = 0; i < planes.size(); i++)
@@ -313,14 +314,6 @@ vec3 PhysicsEngine::ClosestPointToOBB(vec3 point, OBB obb)
 
 	for (int i = 0; i < 3; i++)
 	{
-		/*float dist = glm::dot(d, obb.u[i]);
-		if (dist > obb.edges[i])
-		dist = obb.edges[i];
-		if (dist < -obb.edges[i])
-		dist = -obb.edges[i];
-		res += dist * obb.u[i];
-		*/
-
 		float dist = glm::clamp(glm::dot(d, obb.u[i]), -obb.edges[i], obb.edges[i]);
 		res += dist * obb.u[i];
 	}

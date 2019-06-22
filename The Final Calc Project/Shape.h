@@ -40,7 +40,8 @@ protected:
 	int type;
 	//try this 
 	glm::fquat quat;
-
+	bool awake;
+	bool alive;
 public:
 	Shapes() {
 		position = vec3(0.0f);
@@ -56,6 +57,7 @@ public:
 		mass = 0.0f;
 		pitch = yaw = roll = 0.0f;
 		quat = fquat(0, vec3(0, 1, 0));
+		alive = true;
 	//	obb.u = mat3(0.0f);
 		//obb.u[0][0] = obb.u[1][1] = obb.u[2][2] = 1.0f;
 	}
@@ -72,6 +74,25 @@ public:
 		iTensorInv = mat3(0.0f);
 		mass = 0.0f;
 		pitch = yaw = roll = 0.0f;
+		alive = true;
+	}
+	bool isAwake()
+	{
+		if (awake)
+			return true;
+		return false;
+	}
+	bool Alive()
+	{
+		return alive;
+	}
+	void setAlive()
+	{
+		alive = true;
+	}
+	void kil()
+	{
+		alive = false;
 	}
 	//generate the OBB for each body
 	virtual void generateOBB() {};
@@ -81,20 +102,6 @@ public:
 	vec3 getAngularMomentoum() { return angularMo; }
 	virtual void generateInteriaTensor() {};
 
-	//TODO:To move the Shapes
-	void applyForce(vec3 force,vec3 point) {
-		force = force / mass;
-		acc += force;
-		speed += acc;
-
-
-
-		//vec3 res = pointTolocalAxis(point);
-		vec3 res = point - position;
-		vec3 torque = glm::cross(res, force);
-		angularMo += torque;
-		acc = vec3(0.0f);
-	}
 	void setAngularMomentom(vec3 L) { this->angularMo = L; }
 	vec3 getAngularMomentom() { return this->angularMo; }
 	void setType(int t)
@@ -105,16 +112,35 @@ public:
 	{
 		return this->type;
 	}
-	//void simulateRotation(vec3 point, vec3 force) {	}
-	void Integrate() {
 
+	//TODO:To move the Shapes
+	void applyForce(vec3 force, vec3 point,float duration) {
+		force = force * (1 / mass) * duration;
+		acc += force;
+		speed += acc;
+		
+		vec3 res = point - position;
+		vec3 torque = glm::cross(res, force);
+		angularMo += torque * duration;
+		acc = vec3(0.0f);
+		awake = true;
+	}
+	void Integrate() {
+		if (!this->isAwake())
+			return;
 		//Linear Moves
 		position = position + speed;
 		obb.center = position;
 		//Angular Moves
 		mat3 I = obb.u * iTensor * (glm::transpose(obb.u));
-		vec3 omega = vec3(0.0f);
-		omega = glm::inverse(I) * angularMo;
+		vec3 omega = glm::inverse(I) * angularMo;
+
+		if (glm::dot(speed, speed) < 0.01&&glm::dot(omega, omega) < 0.01)
+		{
+			speed = vec3(0.0f);
+			omega = vec3(0.0f);
+			awake = false;
+		}
 
 		glm::fquat qOmega = fquat(0, omega);
 
@@ -126,12 +152,6 @@ public:
 		pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
 		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[1][2] * obb.u[1][2]) + (obb.u[2][2] * obb.u[2][2]))));
 		roll = glm::degrees(atan2(obb.u[1][0], obb.u[0][0]));
-		
-		/*pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
-		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[0][0] * obb.u[0][0]) + (obb.u[0][1] * obb.u[0][1]))));
-		float t1 = sin(pitch)*obb.u[2][0] - cos(pitch) * obb.u[1][0];
-		float t2 = cos(pitch) * obb.u[1][] - sin(pitch) * 
-		roll = glm::degrees();*/
 	}
 	vec3 getPostion() {
 		return position;

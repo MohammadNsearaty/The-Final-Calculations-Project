@@ -29,8 +29,14 @@ public:
 	std::vector<Line> getEdges();
 	std::vector<Plane> getPlanes();
 	bool pointInOBB(glm::vec3 point);
+	vec3 ClosestPointToOBB(vec3 point);
 	Interval getInterval(glm::vec3 axis);
-
+	bool Empty()
+	{
+		if (edges[0] != 0 && edges[1] != 0 && edges[2] != 0)
+			return false;
+		return true;
+	}
 
 };
 

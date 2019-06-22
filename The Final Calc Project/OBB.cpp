@@ -27,7 +27,7 @@ std::vector<vec3> OBB::getVertices()
 std::vector<Line> OBB::getEdges()
 {
 	std::vector<Line> edges;
-	edges.resize(12);
+	//edges.resize(12);
 	std::vector<vec3> vertices = this->getVertices();
 	int index[][2] = { // Indices of edge-vertices 
 		{ 6,1 },{ 6,3 },{ 6,4 },{ 2,7 },{ 2,5 },{ 2,0 },
@@ -62,6 +62,7 @@ std::vector<Plane> OBB::getPlanes()
 
 bool OBB::pointInOBB(vec3 point)
 {
+	/*
 	vec3 dir = point - this->center;
 	for (int i = 0; i < 3; i++)
 	{
@@ -72,7 +73,32 @@ bool OBB::pointInOBB(vec3 point)
 		if (dist < -edges[i])
 			return false;
 	}
-	return true;
+	return true;*/
+
+	glm::vec3 res = this->ClosestPointToOBB(point);
+	res = res - point;
+	return dot(res, res) < 1e-6;
+}
+
+vec3 OBB::ClosestPointToOBB(vec3 point)
+{
+	vec3 d = point - this->center;
+	vec3 res = this->center;
+
+	for (int i = 0; i < 3; i++)
+	{
+		/*float dist = glm::dot(d, obb.u[i]);
+		if (dist > obb.edges[i])
+		dist = obb.edges[i];
+		if (dist < -obb.edges[i])
+		dist = -obb.edges[i];
+		res += dist * obb.u[i];
+		*/
+
+		float dist = glm::clamp(glm::dot(d, this->u[i]), -this->edges[i], this->edges[i]);
+		res += dist * this->u[i];
+	}
+	return res;
 }
 Interval OBB::getInterval(vec3 axis)
 {

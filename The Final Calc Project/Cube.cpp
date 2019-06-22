@@ -69,7 +69,7 @@ void Cube::draw_3D() {
 		glRotated(pitch, 1, 0, 0);
 		glRotated(yaw, 0, 1, 0);
 		glRotated(roll, 0, 0, 1);
-		glutSolidCube(this->length[0]);
+		glutWireCube(this->length[0]);
 //		glTranslated(0, 0, 0);
 	//	glColor3d(1, 1, 1);
 	}glPopMatrix();
