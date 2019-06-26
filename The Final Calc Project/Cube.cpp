@@ -58,7 +58,19 @@ void Cube::calcEdges()
 	edges[6] = vec3(x + d, y - d, z + d);
 	edges[7] = vec3(x + d, y - d, z - d);
 }
-
+void Cube::drawSolid()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BITS);
+	glPushMatrix();
+	{
+		glTranslated(this->position.x, this->position.y, this->position.z);
+		glColor3d(color.x, color.y, color.z);
+		glRotated(pitch, 1, 0, 0);
+		glRotated(yaw, 0, 1, 0);
+		glRotated(roll, 0, 0, 1);
+		glutSolidCube(this->length[0]);
+	}glPopMatrix();
+}
 void Cube::draw_3D() {
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BITS);
 	glPushMatrix();

@@ -43,11 +43,7 @@ std::vector<Plane> OBB::getPlanes()
 {
 	glm::vec3 c = this->center;
 	glm::vec3 e = this->edges;
-	glm::vec3 a[] = {           // OBB Axis 
-		glm::vec3(u[0][0], u[0][1], u[0][2]),
-		glm::vec3(u[1][0], u[1][1], u[1][2]),
-		glm::vec3(u[2][0], u[2][1], u[2][2]),
-	};
+	glm::vec3 a[] = { u[0] ,u[1] ,u[2] };
 	std::vector<Plane> planes;
 	planes.resize(6);
 	planes[0] = Plane(a[0], dot(a[0], (c + a[0] * e.x)));

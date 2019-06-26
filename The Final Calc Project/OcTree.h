@@ -6,6 +6,9 @@
 #include<queue>
 #include"Shape.h"
 #include<list>
+#include"CollisionInfo.h"
+#include<freeglut.h>
+#include"PhysicsEngine.h"
 class OcTree {
 public:
 	//the min/max of the current region
@@ -37,6 +40,9 @@ public:
 
 	//the objects in the tree
 	std::list<Shapes> allObjects;
+
+	//the physics engine
+public:	PhysicsEngine engine;
 public:
 	OcTree(BoundingBox region, std::list<Shapes> list)
 	{
@@ -63,8 +69,9 @@ public:
 	OcTree CreateNode(BoundingBox region, std::list<Shapes> objList);
 	OcTree CreateNode(BoundingBox region, Shapes item);
 	void Update(float time);
-	void Insert(Shapes s1) {};
-
+	bool Insert(Shapes s1);
+	std::list<CollisionInfo> getIntersection(std::list<Shapes> parentObj);
+	void draw3D(vec3 color);
 };
 
 

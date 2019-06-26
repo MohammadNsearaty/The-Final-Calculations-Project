@@ -12,7 +12,8 @@
 #include"Cube.h"
 #include"Shpere.h"
 #include"PhysicsEngine.h"
-
+#include"BoundingBox.h"
+#include<time.h>
 #include<vector>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -39,14 +40,16 @@ float deltaMove = 0;
 //the physics engine
 PhysicsEngine engine = PhysicsEngine();
 GLUquadric *glu = gluNewQuadric();
-Cube cube1(glu, 1, 1, 0.5, 6, 0, 1, 0, 1);
+Cube cube1(glu, 1, 1, -0.5, 4, 0, 1, 0, 1);
 Cube cube2(glu, 1, 1, 0, 0, 0, 1, 1, 1);
-Shpere sp1(glu, 1, 1, 0, 0, 0, 1, 0, 0);
+Shpere sp1(glu, 1, 1, 4, 0, 0, 1, 0, 0);
 Shpere sp2(glu, 1, 1, 0.9, 6, 0, 0, 1, 0);
 
 
 Shpere sp(glu,2,1,0,0,0,1,0,0);
 
+int frame = 0, Time, timeBase = 0;
+float fps = 600.0f;
 void camera();
 void drawSnowMan();
 void computePos(float deltaMove);
@@ -54,11 +57,15 @@ void computeDir(float deltaAngle);
 void keyboard(int k, int x, int y);
 
 vec3 testForce = vec3(0.0007,0,0);
-vec3 virtualGravity = vec3(0, -0.002, 0);
+vec3 virtualGravity = vec3(0, -0.98,0);
+vec3 tVec = vec3(0, -0.1, 0);
+
 OBB o1 = cube1.getOBB();
 OBB o2 = cube2.getOBB();
 std::vector<Line> e1 = o1.getEdges();
 std::vector<Line> e2 = o2.getEdges();
+//BoundingBox box(vec3(1,1,1),vec3(-1,-1,-1));
+
 //CollisionInfo res = engine.ShereVsShpere(sp1, sp2);
 
 //CollisionInfo CRes(-1, false,vec3(0.0f));
@@ -117,43 +124,62 @@ void my_display_code()
 	ImGui::Text("shpere speed x:%f  y:%f  z:%f",sp2.getSpeed().x, sp2.getSpeed().y, sp2.getSpeed().z);
 //	vec3 p = CRes.getCollisionPoint();
 //	ImGui::Text("The Collision Inforamtion dist :: %f , Is Collision  %d , point %f , %f , %f",CRes.getDist(),CRes.getIsCollision(),p.x,p.y,p.z );
-//	ImGui::Text("cube speed %f  %f  %f   shpere speed  %f  %f  %f ", cube1.getSpeed().x , cube1.getSpeed().y, cube1.getSpeed().z, sp1.getSpeed().x, sp1.getSpeed().y, sp1.getSpeed().z);
+	ImGui::Text("cube speed %f  %f  %f   shpere speed  %f  %f  %f ", cube1.getSpeed().x , cube1.getSpeed().y, cube1.getSpeed().z, sp1.getSpeed().x, sp1.getSpeed().y, sp1.getSpeed().z);
 //	ImGui::Text("pitch  %f , yaw %f , roll %f",cube1.getPitch(),cube1.getYaw(),cube1.getRoll());
 	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);   
 	
 	// Edit 1 float using a slider from 0.0f to 1.0f
 
-	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::Text("Application average %.3f ms/frame (%.d FPS)", 1000.0f / (ImGui::GetIO().Framerate), fps);
 	ImGui::End();
 
 	glPushMatrix();
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BITS);
 		glScaled(0.1, 0.1, 0.1);
-		vec3 tmp = vec3(cube1.getPostion().x - 0.5, cube1.getPostion().y, cube1.getPostion().z);
-		cube1.applyForce(virtualGravity, tmp);
-		virtualGravity = vec3(0.0f);
-		cube1.Integrate();
-		cube2.Integrate();
 
+		//box.draw3D();
+		//cube2.draw_3D();
+
+		vec3 tmp = vec3(cube1.getPostion().x + 0.5, cube1.getPostion().y, cube1.getPostion().z);
+		cube1.applyForce(virtualGravity,cube1.getPostion());
+		//cube1.applyForce(tVec, tmp);
+		//tVec = vec3(0.0f);
+	//	virtualGravity = vec3(0.0f);
+		
 		CollisionInfo result = engine.ObbVsOBB(cube1.getOBB(), cube2.getOBB());
 		if (result.getIsCollision())
 		{
+			engine.resolvePentration(&cube1, &cube2, result.getDepth(), result.getNormal());
 			for (int i = 0; i < result.points.size(); i++) {
 				CollisionInfo tmp = CollisionInfo(result);
 				tmp.points.clear();
 				tmp.points.push_back(result.points[i]);
-				vec3 j = engine.J(cube1, cube2, tmp);
-				vec3 force1 = j*result.getNormal();
-				vec3 force2 = j * (-result.getNormal());
-				force1 = force1 * 2.0f;
-				force2 = force2 * 2.0f;
-				cube1.applyForce(force1,result.points[i]);
-				cube1.Integrate();
-				cube2.applyForce(force2, result.points[i]);
-				cube2.Integrate();
-			}
+			
+				for (int k = 0; k < 8; k++)
+				{
+					vec3 j = engine.J(cube1, cube2, tmp);
+					/*cube1.applyForce(j, result.points[i]);
+					cube2.applyForce(-j, result.points[i]); */
+					cube1.setSpeed(cube1.getSpeed() + (j / cube1.getMass()));
+					cube2.setSpeed(cube2.getSpeed() - (j / cube2.getMass()));
+
+					vec3 vect1 = (result.points[i] - cube1.getPostion());
+					vec3 torq1 = cross(vect1, j);
+					vec3 vect2 = (result.points[i] - cube2.getPostion());
+					vec3 torq2 = cross(vect2, j);
+					mat3 I1 = cube1.obb.u * cube1.getITensor() * (glm::transpose(cube1.obb.u));
+					mat3 I2 = cube2.obb.u * cube2.getITensor() * (glm::transpose(cube2.obb.u));
+
+					cube1.omega += inverse(I1) * torq1;
+					cube2.omega -= inverse(I2) * torq2;
+				}
+			/*	
+			*/}
 		}
+		float dur = 1 / fps;
+		cube1.Integrate(dur);
+		cube2.Integrate(dur);
 		cube1.draw_3D();
 		cube2.draw_3D();
 		
@@ -220,6 +246,16 @@ void glut_display_func()
 
 	glutSwapBuffers();
 	glutPostRedisplay();
+
+	frame++;
+	Time = glutGet(GLUT_ELAPSED_TIME);
+	if (Time - timeBase > 1000)
+	{
+		fps = frame * 1000 / (Time - timeBase);
+		timeBase = Time;
+		frame = 0;
+	}
+	
 }
 
 // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -238,16 +274,16 @@ int main(int argc, char** argv)
 	glutInitWindowSize(1200, 720);
 	glutCreateWindow("Dear ImGui GLUT+OpenGL2 Example");
 	glClear(GL_COLOR_BUFFER_BIT);
-//	glutGameModeString("800x600:32");
-	if (glutGameModeGet(GLUT_GAME_MODE_POSSIBLE))
+/*	if (glutGameModeGet(GLUT_GAME_MODE_POSSIBLE))
 	{
+	//	glutGameModeString("16");
 		glutEnterGameMode();
 	}
-	
+	*/
 	// Setup GLUT display function
 	// We will also call ImGui_ImplGLUT_InstallFuncs() to get all the other functions installed for us,
 	// otherwise it is possible to install our own functions and call the imgui_impl_glut.h functions ourselves.
-
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glutDisplayFunc(glut_display_func);
 	glutReshapeFunc(reshape);
 	glutTimerFunc(0, timer, 0);
@@ -273,6 +309,7 @@ int main(int argc, char** argv)
 	//scale the cordinates
 	glScaled(0.1, 0.1, 0.1);
 	glEnable(GL_DEPTH_TEST);
+	
 
 	glutMainLoop();
 
@@ -295,7 +332,7 @@ void reshape(int w, int h)
 }
 void timer(int)
 {
-	glutPostRedisplay();
+	//glutPostRedisplay();
 	glutTimerFunc(1, timer, 0);
 }
 /*

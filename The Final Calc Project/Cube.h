@@ -18,6 +18,7 @@ public:
 	//TODO:The Virtual Function you must reDefine it in The subclass 
 	void draw_2D(int x, int y);
 	void draw_3D();
+	void drawSolid();
 	void calcEdges();
 	Collision_Data Collision(Shapes* other);
 	void testRotate(vec3 force, vec3 point);

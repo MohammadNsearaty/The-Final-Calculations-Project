@@ -13,7 +13,10 @@ private:
 	vec3 normal;
 public:
 	std::vector<glm::vec3> points;
-	CollisionInfo(){}
+	CollisionInfo(){
+		isCollision = false;
+		depth = 0.0f;
+	}
 	CollisionInfo(float dist, bool b, vec3 point)
 	{
 		this->depth= dist;

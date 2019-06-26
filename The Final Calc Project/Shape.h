@@ -35,7 +35,6 @@ protected:
 	float yaw;
 	float roll;
 	//The Oriented Bounding Box
-	OBB obb;
 	//my variable
 	int type;
 	//try this 
@@ -43,6 +42,11 @@ protected:
 	bool awake;
 	bool alive;
 public:
+	vec3 frocesAcc = vec3(0.0f);
+	vec3 tourqAcc = vec3(0.0f);
+	vec3 omega = vec3(0.0f);
+public:OBB obb;
+
 	Shapes() {
 		position = vec3(0.0f);
 		color = vec3(0.0f);
@@ -112,47 +116,87 @@ public:
 	{
 		return this->type;
 	}
-
+	void applyForce(vec3 force, vec3 point)
+	{
+		if (!obb.pointInOBB(point))
+			return;
+		this->frocesAcc += force;
+		vec3 res = point - position;
+		this->tourqAcc += glm::cross(res,force);
+		awake = true;
+	}
 	//TODO:To move the Shapes
-	void applyForce(vec3 force, vec3 point,float duration) {
-		force = force * (1 / mass) * duration;
+	/*
+	void applyForce(vec3 force, vec3 point) {
+		if (!obb.pointInOBB(point))
+			return;
+		force = force * (1 / mass);
 		acc += force;
 		speed += acc;
 		
+
+
 		vec3 res = point - position;
+	
 		vec3 torque = glm::cross(res, force);
-		angularMo += torque * duration;
+		
+
+		//glm::fquat qOmega = fquat(0, omega);
+
+		//quat += (1.0f / 2.0f) * (qOmega * quat);
+		mat3 mat = star(omega);
+		obb.u += mat * obb.u;
+		//obb.u = glm::toMat3(glm::normalize(quat));
+
 		acc = vec3(0.0f);
 		awake = true;
 	}
-	void Integrate() {
-		if (!this->isAwake())
+	*/
+	void Integrate(float duration)
+	{
+		
+		if (!this->awake)
 			return;
+		speed += (this->frocesAcc / mass )*duration ;
+		position += speed * duration;
+		obb.center = position;
+
+		//angularMo += this->tourqAcc;
+		mat3 I = obb.u * iTensor * (glm::transpose(obb.u));
+		vec3 omega1 = inverse(I) * angularMo;
+		omega += inverse(I) * tourqAcc;
+
+		
+	    mat3 mat = star(omega) * duration;
+		obb.u += mat * obb.u;
+	/*
+	glm::fquat qOmega = fquat(0, omega);
+	quat += (1.0f / 2.0f) * (qOmega * quat * duration);
+	obb.u = glm::toMat3(glm::normalize(quat));
+	vec3 axis = glm::eulerAngles(quat);
+		pitch = glm::degrees(axis.x);
+		yaw = glm::degrees(axis.y);
+		roll = glm::degrees(axis.z);
+	*/	
+
+		pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
+		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[1][2] * obb.u[1][2]) + (obb.u[2][2] * obb.u[2][2]))));
+		roll = glm::degrees(atan2(obb.u[1][0], obb.u[0][0]));
+		
+		this->frocesAcc = this->tourqAcc = vec3(0.0f);
+		
+	}/*
+	void Integrate() {
+		//if (!this->isAwake())
+			//return;
 		//Linear Moves
 		position = position + speed;
 		obb.center = position;
 		//Angular Moves
-		mat3 I = obb.u * iTensor * (glm::transpose(obb.u));
-		vec3 omega = glm::inverse(I) * angularMo;
-
-		if (glm::dot(speed, speed) < 0.01&&glm::dot(omega, omega) < 0.01)
-		{
-			speed = vec3(0.0f);
-			omega = vec3(0.0f);
-			awake = false;
-		}
-
-		glm::fquat qOmega = fquat(0, omega);
-
-		quat += (1.0f / 2.0f) * (qOmega * quat);
-		//mat3 mat = star(omega);
-		//obb.u += mat * obb.u;
-
-		obb.u = glm::toMat3(quat);
 		pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
 		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[1][2] * obb.u[1][2]) + (obb.u[2][2] * obb.u[2][2]))));
 		roll = glm::degrees(atan2(obb.u[1][0], obb.u[0][0]));
-	}
+	}*/
 	vec3 getPostion() {
 		return position;
 	}
@@ -231,19 +275,19 @@ public:
 		// roll (x-axis rotation)
 		double sinr_cosp = +2.0 * (q.w * q.x + q.y * q.z);
 		double cosr_cosp = +1.0 - 2.0 * (q.x * q.x + q.y * q.y);
-		roll = atan2(sinr_cosp, cosr_cosp);
+		pitch = glm::degrees(atan2(sinr_cosp, cosr_cosp));
 
 		// pitch (y-axis rotation)
 		double sinp = +2.0 * (q.w * q.y - q.z * q.x);
 		if (fabs(sinp) >= 1)
-			pitch = copysign(3.14f / 2, sinp); // use 90 degrees if out of range
+			yaw = degrees(copysign(3.14f / 2, sinp)); // use 90 degrees if out of range
 		else
-			pitch = asin(sinp);
+			yaw = degrees(asin(sinp));
 
 		// yaw (z-axis rotation)
 		double siny_cosp = +2.0 * (q.w * q.z + q.x * q.y);
 		double cosy_cosp = +1.0 - 2.0 * (q.y * q.y + q.z * q.z);
-		yaw = atan2(siny_cosp, cosy_cosp);
+		roll = degrees(atan2(siny_cosp, cosy_cosp));
 	}
 	//TODO:To Collision
 	virtual void Collision2() {};

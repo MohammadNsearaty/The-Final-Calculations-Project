@@ -159,6 +159,7 @@
     <ClCompile Include="OcTree.cpp" />
     <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Shpere.cpp" />
+    <ClCompile Include="Test1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AxisAlignBounding_Data.h" />

@@ -11,7 +11,7 @@
 using namespace std;
 
 #define EPSILON 1e-6
-#define colEpsilon 0.3f
+#define colEpsilon 0.9f
 #define MAX 1e6
 class PhysicsEngine {
 private:
@@ -39,7 +39,6 @@ public:
 
 	void HandlerCollision();
 
-	int TestOBB(OBB &a, OBB &b);
 
 	vec3 ClosestPointToPlane(vec3 point, Plane plane);
 	float distPointToPlane(vec3 point, Plane plane);
@@ -56,38 +55,55 @@ public:
 	std::vector<vec3> ClipEdgesToOBB(std::vector<Line> edges, OBB obb);
 	float PentrationDepth(OBB o1, OBB o2,const vec3 axis, bool* outShouldFlip);
 	CollisionInfo ObbVsOBB(OBB o1, OBB o2);
-
+	CollisionInfo intersect(Shapes s1, Shapes s2);
+	void resolvePentration(Shapes *s1, Shapes *s2, float depth,vec3 normal);
 };
+void PhysicsEngine::resolvePentration(Shapes *s1, Shapes *s2, float depth,vec3 normal)
+{
+	float totalMass = s1->getMass() + s2->getMass();
+	float scale = depth / totalMass;
+	vec3 correction = normal * scale;
+	s1->setPosition(s1->getPostion() - correction * (1 / s1->getMass()));
+	s2->setPosition(s2->getPostion() + correction * (1 / s2->getMass()));
+	s1->obb.center = s1->getPostion();
+	s2->obb.center = s2->getPostion();
+};
+
+CollisionInfo PhysicsEngine::intersect(Shapes s1, Shapes s2)
+{
+	if (s1.getType() == 0 && s2.getType() == 0)
+		return this->ShereVsShpere(s1, s2);
+	else if (s1.getType() == 0 && s2.getType() == 1)
+		return this->ShepreAndOBB(s1, s2.getOBB());
+	else if (s1.getType() == 1 && s2.getType() == 1)
+		return this->ObbVsOBB(s1.getOBB(), s2.getOBB());
+}
 CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 {
 	CollisionInfo result;
 	this->resetCollisionInfo(&result);
 	vec3 test[15] = {//the o1 axis and the o2 axis
-		vec3(o1.u[0][0] , o1.u[0][1] , o1.u[0][2]),
-		vec3(o1.u[1][0] , o1.u[1][1] , o1.u[1][2]),
-		vec3(o1.u[2][0] , o1.u[2][1] , o1.u[2][2]),
-		vec3(o2.u[0][0] , o2.u[0][1] , o2.u[0][2]),
-		vec3(o2.u[1][0] , o2.u[1][1] , o2.u[1][2]),
-		vec3(o2.u[2][0] , o2.u[2][1] , o2.u[2][2]),
+		o1.u[0],o1.u[1],o1.u[2],
+		o2.u[0],o2.u[1],o2.u[2],
 	};
 	//the rest of the axis is the cross product between the o1 axis and the o2 axis
 	for (int i = 0; i < 3; i++)
 	{
-		test[6 + i * 3 + 0] = cross(test[i], test[0]);
-		test[6 + i * 3 + 1] = cross(test[i], test[1]);
-		test[6 + i * 3 + 2] = cross(test[i], test[2]);
+		test[6 + i * 3 + 0] = cross(test[i], test[3]);
+		test[6 + i * 3 + 1] = cross(test[i], test[4]);
+		test[6 + i * 3 + 2] = cross(test[i], test[5]);
 	}
 	//tmp value for the direction of the collision Normal
-	vec3 hitNormal;
+	vec3 *hitNormal;
 	bool hit = false;
 	bool shouldFlip;
 	//loop through the 15 axis 
 	for (int i = 0; i < 15; i++)
 	{
-		float len = glm::length(test[i]);
-		if (len*len < 0.001f)
+		float len = glm::dot(test[i],test[i]);
+		if (len < 0.00001f)
 			continue;
-
+		//test[i] = glm::normalize(test[i]);
 		float depth = this->PentrationDepth(o1, o2, test[i], &shouldFlip);
 
 		if (depth <= 0.0f)
@@ -99,21 +115,26 @@ CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 				test[i] = test[i] * -1.0f;
 			}
 			result.setDepth(depth);
-			hitNormal = vec3(test[i]);
+			hitNormal = &test[i];
 			hit = true;
 		}
 	}
-	if (hit == false)
+	if (hitNormal == 0)
 		return result;
-	vec3 axis = glm::normalize(hitNormal);
+	/*if (hit == false)
+		return result;*/
+	vec3 axis = glm::normalize(*hitNormal);
 	std::vector<vec3> c1 = this->ClipEdgesToOBB(o2.getEdges(), o1);
-	std::vector<Line> edge1 = o1.getEdges();
-	std::vector<vec3> c2 = this->ClipEdgesToOBB(edge1, o2);
+	std::vector<vec3> c2 = this->ClipEdgesToOBB(o1.getEdges(), o2);
+	if (c1.size() == 0 && c2.size() == 0)
+		return result;
 	result.points.reserve(c1.size() + c2.size());
 
 	result.points.insert(result.points.end(), c1.begin(), c1.end());
 	result.points.insert(result.points.end(), c2.begin(), c2.end());
-	
+	//result.setIsCollision(true);
+	//result.setNormal(axis);
+	//return result;
 	Interval interval = o1.getInterval(axis);
 	float distance = (interval.getMax() - interval.getMin()) * 0.5f - result.getDepth() * 0.5f;
 	vec3 POnPlane = o1.center + axis * distance;
@@ -131,6 +152,7 @@ CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 				break;
 			}
 		}
+		
 	}
 	result.setIsCollision(true);
 	result.setNormal(axis);
@@ -139,8 +161,8 @@ CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 }
 float PhysicsEngine::PentrationDepth(OBB o1, OBB o2, const vec3 axis, bool* outShouldFlip)
 {
-	Interval i1 = o1.getInterval(glm::normalize(axis));
-	Interval i2 = o2.getInterval(glm::normalize(axis));
+	Interval i1 = o1.getInterval(axis);
+	Interval i2 = o2.getInterval(axis);
 
 	if (!((i2.getMin() <= i1.getMax()) && (i1.getMin() <= i2.getMax()))) {
 		return 0.0f; // No penerattion
@@ -184,7 +206,7 @@ bool PhysicsEngine::ClipToPlane(Plane plane, Line line, vec3* outPoint)
 {
 	vec3 ab = line.end - line.start;
 	float nAB = dot(plane.getNormal(), ab);
-	if (nAB - 0 < 1e-6)//check  if the vectors are orthangular
+	if (glm::abs(nAB) < 1e-6)//check  if the vectors are orthangular
 		return false;
 	float nA = dot(plane.getNormal(), line.start);
 	float t = (plane.getDistance() - nA) / nAB;
@@ -210,17 +232,17 @@ void PhysicsEngine::resetCollisionInfo(CollisionInfo *info)
 vec3 PhysicsEngine::J(Shapes s1, Shapes s2, CollisionInfo info)
 {
 
-	mat3 Ia = s1.getOBB().u * (glm::inverse(s1.getITensor())) * (glm::transpose(s1.getOBB().u));
+	mat3 Ia = s1.getOBB().u * (s1.getITensor()) * (glm::transpose(s1.getOBB().u));
 	vec3 omegaA = vec3(0.0f);
 	omegaA = glm::inverse(Ia) * s1.getAngularMomentoum();
 
-	mat3 Ib = s2.getOBB().u * (glm::inverse(s2.getITensor()))* (glm::transpose(s2.getOBB().u));
+	mat3 Ib = s2.getOBB().u * (s2.getITensor())* (glm::transpose(s2.getOBB().u));
 	vec3 omegaB = vec3(0.0f);
 	omegaB = glm::inverse(Ib) * s2.getAngularMomentoum();
-	vec3 Pa = s1.pointTolocalAxis(info.points[0]);
-	vec3 Pb = s2.pointTolocalAxis(info.points[0]);
-	vec3 ra = Pa - s1.getPostion();
-	vec3 rb = Pb - s2.getPostion();
+	//vec3 Pa = s1.pointTolocalAxis(info.points[0]);
+	//vec3 Pb = s2.pointTolocalAxis(info.points[0]);
+	vec3 ra = info.points[0] - s1.getPostion();
+	vec3 rb = info.points[0] - s2.getPostion();
 
 	vec3 dPa = s1.getSpeed() + glm::cross(omegaA, ra);
 	vec3 dPb = s2.getSpeed() + glm::cross(omegaB, rb);
@@ -248,7 +270,7 @@ vec3 PhysicsEngine::J(Shapes s1, Shapes s2, CollisionInfo info)
 
 	vec3 j = upTerm / downTerm;
 
-	return j;
+	return j*n;
 
 
 }
@@ -258,9 +280,8 @@ CollisionInfo PhysicsEngine::ShereVsShpere(Shapes sp1, Shapes sp2)
 	resetCollisionInfo(&res);
 	float r = sp1.getlength()[0] + sp1.getlength()[0];
 	vec3 d = sp2.getPostion() - sp1.getPostion();
-	float l = length(d);
-	l = l*l;
-	if (l - r*r > 0 || glm::length(d) == 0.0f)
+	float l = dot(d,d);
+	if (l - r*r > 0 || l == 0.0f)
 		return res;
 
 
@@ -325,73 +346,6 @@ float PhysicsEngine::SqDistPointToOBB(vec3 point, OBB obb)
 	vec3 p = ClosestPointToOBB(point, obb);
 	return glm::dot(p - point, p - point);
 }
-int PhysicsEngine::TestOBB(OBB &a, OBB &b)
-{
-	float ra, rb;
-	mat3 R, AbsR;
-	// Compute rotation matrix expressing b in a’s coordinate frame
-	for (int i = 0; i < 3; i++)
-		for (int j = 0; j < 3; j++)
-			R[i][j] = glm::dot(a.u[i], b.u[j]);
-
-
-	// Compute translation vector t 
-	vec3 t = b.center - a.center; // Bring translation into a’s coordinate frame
-	t = vec3(glm::dot(t, a.u[0]), glm::dot(t, a.u[1]), glm::dot(t, a.u[2]));
-	// Compute common subexpressions. Add in an epsilon term to // counteract arithmetic errors when two edges are parallel and // their cross product is (near) null (see text for details)
-	for (int i = 0; i < 3; i++)
-		for (int j = 0; j < 3; j++)
-			AbsR[i][j] = glm::abs(R[i][j]) + 1e-6;
-	// Test axes L = A0, L = A1, L = A2 
-	for (int i = 0; i < 3; i++)
-	{
-		ra = a.edges[i];
-		rb = b.edges[0] * AbsR[i][0] + b.edges[1] * AbsR[i][1] + b.edges[2] * AbsR[i][2];
-		if (glm::abs(t[i]) > ra + rb) return 0;
-	}
-	// Test axes L = B0, L = B1, L = B2
-	for (int i = 0; i < 3; i++)
-	{
-		ra = a.edges[0] * AbsR[0][i] + a.edges[1] * AbsR[1][i] + a.edges[2] * AbsR[2][i]; rb = b.edges[i];
-		if (glm::abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb) return 0;
-	}
-	// Test axis L = A0 x B0
-	ra = a.edges[1] * AbsR[2][0] + a.edges[2] * AbsR[1][0]; rb = b.edges[1] * AbsR[0][2] + b.edges[2] * AbsR[0][1];
-	if (glm::abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb) return 0;
-	// Test axis L = A0 x B1
-	ra = a.edges[1] * AbsR[2][1] + a.edges[2] * AbsR[1][1]; rb = b.edges[0] * AbsR[0][2] + b.edges[2] * AbsR[0][0];
-	if (glm::abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb) return 0;
-	// Test axis L = A0 x B2 
-	ra = a.edges[1] * AbsR[2][2] + a.edges[2] * AbsR[1][2]; rb = b.edges[0] * AbsR[0][1] + b.edges[1] * AbsR[0][0];
-	if (glm::abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb) return 0;
-	// Test axis L = A1 x B0
-	ra = a.edges[0] * AbsR[2][0] + a.edges[2] * AbsR[0][0];
-	rb = b.edges[1] * AbsR[1][2] + b.edges[2] * AbsR[1][1];
-	if (glm::abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) return 0;
-	// Test axis L = A1 x B1
-	ra = a.edges[0] * AbsR[2][1] + a.edges[2] * AbsR[0][1];
-	rb = b.edges[0] * AbsR[1][2] + b.edges[2] * AbsR[1][0];
-	if (glm::abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb) return 0;
-	// Test axis L = A1 x B2
-	ra = a.edges[0] * AbsR[2][2] + a.edges[2] * AbsR[0][2];
-	rb = b.edges[0] * AbsR[1][1] + b.edges[1] * AbsR[1][0];
-	if (glm::abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb) return 0;
-	// Test axis L = A2 x B0
-	ra = a.edges[0] * AbsR[1][0] + a.edges[1] * AbsR[0][0];
-	rb = b.edges[1] * AbsR[2][2] + b.edges[2] * AbsR[2][1];
-	if (glm::abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb) return 0;
-	// Test axis L = A2 x B1 
-	ra = a.edges[0] * AbsR[1][1] + a.edges[1] * AbsR[0][1];
-	rb = b.edges[0] * AbsR[2][2] + b.edges[2] * AbsR[2][0];
-	if (glm::abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb) return 0;
-	// Test axis L = A2 x B2
-	ra = a.edges[0] * AbsR[1][2] + a.edges[1] * AbsR[0][2];
-	rb = b.edges[0] * AbsR[2][1] + b.edges[1] * AbsR[2][0];
-	if (glm::abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb) return 0;
-	// Since no separating axis was found, the OBBs must be intersecting
-	return 1;
-}
-
 
 Plane PhysicsEngine::getPlane(int i)
 {
@@ -422,8 +376,8 @@ void PhysicsEngine::AddObject(Shapes* obj) {
 void PhysicsEngine::Simulate(float alpha) {
 
 	//for (unsigned int i = 0; i < Objects.size(); i++) {
-	Objects[0]->Integrate();
-	Objects[1]->Integrate();
+	Objects[0]->Integrate(0.0f);
+	Objects[1]->Integrate(0.0f);
 
 	//	}
 }
