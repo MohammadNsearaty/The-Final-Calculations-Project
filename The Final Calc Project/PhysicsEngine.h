@@ -232,20 +232,13 @@ void PhysicsEngine::resetCollisionInfo(CollisionInfo *info)
 vec3 PhysicsEngine::J(Shapes s1, Shapes s2, CollisionInfo info)
 {
 
-	mat3 Ia = s1.getOBB().u * (s1.getITensor()) * (glm::transpose(s1.getOBB().u));
-	vec3 omegaA = vec3(0.0f);
-	omegaA = glm::inverse(Ia) * s1.getAngularMomentoum();
-
-	mat3 Ib = s2.getOBB().u * (s2.getITensor())* (glm::transpose(s2.getOBB().u));
-	vec3 omegaB = vec3(0.0f);
-	omegaB = glm::inverse(Ib) * s2.getAngularMomentoum();
-	//vec3 Pa = s1.pointTolocalAxis(info.points[0]);
-	//vec3 Pb = s2.pointTolocalAxis(info.points[0]);
+	mat3 Ia = s1.getOBB().u * (glm::inverse(s1.getITensor())) * (glm::transpose(s1.getOBB().u));
+	mat3 Ib = s2.getOBB().u * (glm::inverse(s2.getITensor()))* (glm::transpose(s2.getOBB().u));
 	vec3 ra = info.points[0] - s1.getPostion();
 	vec3 rb = info.points[0] - s2.getPostion();
 
-	vec3 dPa = s1.getSpeed() + glm::cross(omegaA, ra);
-	vec3 dPb = s2.getSpeed() + glm::cross(omegaB, rb);
+	vec3 dPa = s1.getSpeed() + glm::cross(s1.omega, ra);
+	vec3 dPb = s2.getSpeed() + glm::cross(s2.omega, rb);
 
 	vec3 n = info.getNormal();
 

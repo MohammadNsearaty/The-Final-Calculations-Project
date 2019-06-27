@@ -163,7 +163,7 @@ public:OBB obb;
 
 		//angularMo += this->tourqAcc;
 		mat3 I = obb.u * iTensor * (glm::transpose(obb.u));
-		vec3 omega1 = inverse(I) * angularMo;
+	//	vec3 omega1 = inverse(I) * angularMo;
 		omega += inverse(I) * tourqAcc;
 
 		

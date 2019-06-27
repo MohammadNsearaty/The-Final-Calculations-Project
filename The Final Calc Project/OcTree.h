@@ -9,15 +9,14 @@
 #include"CollisionInfo.h"
 #include<freeglut.h>
 #include"PhysicsEngine.h"
+#include<iterator>
+using namespace glm;
 class OcTree {
 public:
 	//the min/max of the current region
 	BoundingBox m_region;
 	//the objects in the current region
 	std::list<Shapes> m_objects;
-	//the objects waiting to be inserted in the tree , we insert them when we want to use them
-	//this thing save some cache
-	static std::queue<Shapes> m_pendingInsertion;
     // the array of the 8 child octants pointers
 	OcTree  *m_childNode[8];
 	// this bitmask indicate which child octant is activly being used
@@ -48,6 +47,7 @@ public:
 	{
 		this->m_region = region;
 		this->m_objects = list;
+	//	this->allObjects = list;
 		this->curLife = -1;
 		ready = false;
 		built = false;
@@ -64,8 +64,6 @@ public:
 		this->m_objects.clear();
 		this->curLife = -1;
 	}
-	void updateTree();
-	void buildTree();
 	OcTree CreateNode(BoundingBox region, std::list<Shapes> objList);
 	OcTree CreateNode(BoundingBox region, Shapes item);
 	void Update(float time);
