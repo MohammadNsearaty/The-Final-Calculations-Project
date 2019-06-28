@@ -22,9 +22,7 @@ Shpere::Shpere(GLUquadric *quadric, float r, float m, float x, float y, float z,
 	generateInteriaTensor();
 	this->setType(0);
 }
-void Shpere::Draw_Shpere() {
 
-}
 void Shpere::generateOBB()
 {
 	obb.center = this->position;
@@ -52,8 +50,10 @@ void Shpere::draw_3D() {
 		glRotated(pitch, 1, 0, 0);
 		glRotated(yaw, 0, 1, 0);
 		glRotated(roll, 0, 0, 1);
-		//gluSphere(quadric1, length[0], Longitudes, Latitudes);
-		glutSolidSphere(length[0], 32, 32);
+		if (drawType == 1)
+			glutSolidSphere(length[0], 32, 32);
+		else
+			glutWireSphere(length[0], 32, 32);
 		glColor3d(1, 1, 1);
 
 	}

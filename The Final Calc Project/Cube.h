@@ -14,7 +14,16 @@ private:
 public:
 	Cube();
 	Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, float c1, float c2, float c3);
-
+	Cube(vec3 pos, float mass, float l, vec3 color) {
+		this->position = pos;
+		this->mass = mass;
+		this->length[0] = l;
+		this->color = color;
+		generateInteriaTensor();
+		iTensorInv = glm::inverse(iTensor);
+		generateOBB();
+		this->setType(1);
+	}
 	//TODO:The Virtual Function you must reDefine it in The subclass 
 	void draw_2D(int x, int y);
 	void draw_3D();

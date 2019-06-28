@@ -17,6 +17,7 @@ Cube::Cube() {
 	iTensorInv = glm::inverse(iTensor);
 	generateOBB();
 	this->setType(1);
+	drawType = 1;
 }
 Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, float c1, float c2, float c3) {	
 	mass = m;
@@ -29,6 +30,7 @@ Cube::Cube(GLUquadric *quadric, float l, float m, float x, float y, float z, flo
 	iTensorInv = glm::inverse(iTensor);
 	generateOBB();
 	this->setType(1);
+	drawType = 1;
 }
 
 void Cube::generateOBB()
@@ -77,73 +79,15 @@ void Cube::draw_3D() {
 	{
 		glTranslated(this->position.x, this->position.y, this->position.z);
 		glColor3d(color.x, color.y, color.z);
-		//this->simulateRotation(this->position, vec3(0.0f));
 		glRotated(pitch, 1, 0, 0);
 		glRotated(yaw, 0, 1, 0);
 		glRotated(roll, 0, 0, 1);
-		glutWireCube(this->length[0]);
-//		glTranslated(0, 0, 0);
-	//	glColor3d(1, 1, 1);
+		if (drawType == 1)
+			glutSolidCube(this->length[0]);
+		else
+			glutWireCube(this->length[0]);
 	}glPopMatrix();
-	/*glPushMatrix();
-	{
-
-		calcEdges();
-		//upper face
-		glColor3d(color.x,color.y,color.z);
-		glBegin(GL_QUADS);
-		glVertex3f(edges[0].x, edges[0].y, edges[0].z);
-		glVertex3f(edges[1].x, edges[1].y, edges[1].z);
-		glVertex3f(edges[2].x, edges[2].y, edges[2].z);
-		glVertex3f(edges[3].x, edges[3].y, edges[3].z);
-		glEnd();
-		//right face
-		glColor3d(0, 1, 0);
-		glBegin(GL_QUADS);
-		glVertex3f(edges[0].x, edges[0].y, edges[0].z);
-		glVertex3f(edges[1].x, edges[1].y, edges[1].z);
-		glVertex3f(edges[6].x, edges[6].y, edges[6].z);
-		glVertex3f(edges[7].x, edges[7].y, edges[7].z);
-		glEnd();
-		//back face
-		glColor3d(color.x, color.y, color.z);
-		glBegin(GL_QUADS);
-		glVertex3f(edges[0].x, edges[0].y, edges[0].z);
-		glVertex3f(edges[3].x, edges[3].y, edges[3].z);
-		glVertex3f(edges[4].x, edges[4].y, edges[4].z);
-		glVertex3f(edges[7].x, edges[7].y, edges[7].z);
-		glEnd();
-		//left face
-		glColor3d(0, 0, 1);
-		glBegin(GL_QUADS);
-		glVertex3f(edges[3].x, edges[3].y, edges[3].z);
-		glVertex3f(edges[2].x, edges[2].y, edges[2].z);
-		glVertex3f(edges[5].x, edges[5].y, edges[5].z);
-		glVertex3f(edges[4].x, edges[4].y, edges[4].z);
-		glEnd();
-		//bottom face
-		glColor3d(0.35,0.7,0.9);
-
-		glBegin(GL_QUADS);
-		glVertex3f(edges[4].x, edges[4].y, edges[4].z);
-		glVertex3f(edges[5].x, edges[5].y, edges[5].z);
-		glVertex3f(edges[2].x, edges[2].y, edges[2].z);
-		glVertex3f(edges[3].x, edges[3].y, edges[3].z);
-		glEnd();
-		//glColor3d(0.7, 0.1, 0.4);
-		//front face
-		glBegin(GL_QUADS);
-		glVertex3f(edges[6].x, edges[6].y, edges[6].z);
-		glVertex3f(edges[1].x, edges[1].y, edges[1].z);
-		glVertex3f(edges[2].x, edges[2].y, edges[2].z);
-		glVertex3f(edges[5].x, edges[5].y, edges[5].z);
-		glEnd();
-
-
-	}
-	glPopMatrix();
-	glColor3d(1, 1, 1);
-	*/
+	
 }
 
 //TODO:The Virtual Function you must reDefine it in The subclass 

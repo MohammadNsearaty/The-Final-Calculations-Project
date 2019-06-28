@@ -15,6 +15,7 @@
 #include"BoundingBox.h"
 #include<time.h>
 #include<vector>
+#include"Ray.h"
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -33,64 +34,66 @@ void timer(int t);
 GLUquadric *q = gluNewQuadric();
 double movX = 0.0f, movY = 0.0f, movZ = 0.0f;
 double lX, lY;
-//when no key is being presses
-float deltaAngle = 0.0f;
-float deltaMove = 0;
+float mass,mass1;
+int arm,raduis;
+float color[3],color1[3];
 
+float v[3] = { 0.0f,0.0f,0.0f };
+float v1[3] = { 0.0f,0.0f,0.0f };
 //the physics engine
 PhysicsEngine engine = PhysicsEngine();
-GLUquadric *glu = gluNewQuadric();
-Cube cube1(glu, 1, 1, -0.5, 4, 0, 1, 0, 1);
-Cube cube2(glu, 1, 1, 0, 0, 0, 1, 1, 1);
-Shpere sp1(glu, 1, 1, 4, 0, 0, 1, 0, 0);
-Shpere sp2(glu, 1, 1, 0.9, 6, 0, 0, 1, 0);
 
-
-Shpere sp(glu,2,1,0,0,0,1,0,0);
-
+bool addCube = false;
+bool addSphere = false;
 int frame = 0, Time, timeBase = 0;
 float fps = 600.0f;
 void camera();
-void drawSnowMan();
-void computePos(float deltaMove);
-void computeDir(float deltaAngle);
-void keyboard(int k, int x, int y);
+
 
 vec3 testForce = vec3(0.0007,0,0);
 vec3 virtualGravity = vec3(0, -0.98,0);
 vec3 tVec = vec3(0, -0.1, 0);
-
-OBB o1 = cube1.getOBB();
-OBB o2 = cube2.getOBB();
-std::vector<Line> e1 = o1.getEdges();
-std::vector<Line> e2 = o2.getEdges();
-//BoundingBox box(vec3(1,1,1),vec3(-1,-1,-1));
-
-//CollisionInfo res = engine.ShereVsShpere(sp1, sp2);
-
-//CollisionInfo CRes(-1, false,vec3(0.0f));
-
+bool checkbox1_enabled = false;
+bool checkbox2_enabled = false;
+Cube newCube;
+Shpere newShpere;
 float mv = 0.001;
 //int res = 0;
 float dist = 0.0;
-void my_display_code()
+void Gui();
+void Gui()
 {
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-	//	if (show_demo_window)
-		//ImGui::ShowDemoWindow(&show_demo_window);
+		//if (show_demo_window)
+	//	ImGui::ShowDemoWindow(&show_demo_window);
 
 
 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
 	static float f = 0.0f;
 	static int counter = 0;
 	ImGuiIO& io = ImGui::GetIO();
-
+/*	if (io.MouseDown[0] || io.MouseDown[1])
+	{
+		system("CLS");
+		ImVec2 mouse = io.MousePos;
+		float h = glutGet(GLUT_WINDOW_HEIGHT);
+		float w = glutGet(GLUT_WINDOW_WIDTH);
+		float x = (mouse.x - (w / 2));
+		float y = (mouse.y - (h / 2));
+		x /= 120 /2;
+		y /= 72 / 2;
+		
+		Ray ray = Ray(vec3(movX, movY, movZ), vec3(x, y, 1));
+		cout << ray.orgin.x << "," << ray.orgin.y << "," << ray.orgin.z << endl;
+		cout<<engine.rayCast(cube1, ray);
+	}
+	*/
 	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
 
 	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 					
-															//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+    ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 	if (io.KeysDown[111])/*ImGui::Button("O") to Close Game Mode*/
 		glutLeaveGameMode();
 	if ( io.KeysDown[119] /*ImGui::Button("  W  ")*/)
@@ -114,116 +117,65 @@ void my_display_code()
 		movZ -= mv;
 	if(io.KeysDown[122]/*the Z key*/)
 		movZ += mv;
-
-	/*
-	ImGui::Text("MovX %f  MovY %f  MovZ %f", movX, movY, movZ);
-	ImGui::Text("Pitch  %f  Yaw %f  Roll %f", cube.getPitch(), cube.getYaw(), cube.getRoll());
-	ImGui::Text("mv rate %f", mv);
-*/
-//	ImGui::Text("the Collision detection result %d", res.getIsCollision());
-	ImGui::Text("shpere speed x:%f  y:%f  z:%f",sp2.getSpeed().x, sp2.getSpeed().y, sp2.getSpeed().z);
-//	vec3 p = CRes.getCollisionPoint();
-//	ImGui::Text("The Collision Inforamtion dist :: %f , Is Collision  %d , point %f , %f , %f",CRes.getDist(),CRes.getIsCollision(),p.x,p.y,p.z );
-	ImGui::Text("cube speed %f  %f  %f   shpere speed  %f  %f  %f ", cube1.getSpeed().x , cube1.getSpeed().y, cube1.getSpeed().z, sp1.getSpeed().x, sp1.getSpeed().y, sp1.getSpeed().z);
-//	ImGui::Text("pitch  %f , yaw %f , roll %f",cube1.getPitch(),cube1.getYaw(),cube1.getRoll());
+	if (ImGui::Button("add cube"))
+	{
+		addCube = true;
+	}
+	if (addCube)
+	{
+		ImGui::InputFloat3("Cube Position", &v[0], 2);
+		ImGui::InputFloat("Cube Mass", &mass);
+		ImGui::InputInt("Cube Rib length", &arm);
+		ImGui::ColorEdit3("Cube Color", &color[0]);
+		ImGui::Checkbox("wire draw", &checkbox2_enabled);
+		if (ImGui::Button("Submit"))
+		{
+			newCube = Cube(vec3(v[0], v[1], v[2]), mass, arm, vec3(color[0],color[1],color[2]));
+			if (checkbox2_enabled)
+				newCube.setDrawType(2);
+			checkbox2_enabled = false;
+			engine.addCube(newCube);
+			addCube = false;
+		}
+	}
+	if (ImGui::Button("add Sphere"))
+	{
+		addSphere = true;
+	}
+	if (addSphere)
+	{
+		ImGui::InputFloat3("Sphere Position", &v1[0]);
+		ImGui::InputFloat("Sphere Mass", &mass1);
+		ImGui::InputInt("Sphere Raduis", &raduis);
+		ImGui::ColorEdit3("Sphere Color", &color1[0]);
+		ImGui::Checkbox("wire draw", &checkbox1_enabled);
+		if (ImGui::Button("Submit"))
+		{
+			newShpere = Shpere(vec3(v1[0],v1[1],v1[2]),mass1,raduis,vec3(color1[0],color1[1],color1[2]));
+			if (checkbox1_enabled)
+				newShpere.setDrawType(2);
+			checkbox1_enabled = false;
+			engine.addShper(newShpere);
+			addSphere = false;
+		}
+	}
 	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);   
-	
-	// Edit 1 float using a slider from 0.0f to 1.0f
-
 	ImGui::Text("Application average %.3f ms/frame (%.d FPS)", 1000.0f / (ImGui::GetIO().Framerate), fps);
 	ImGui::End();
 
+	}
+void my_display_code()
+{
 	glPushMatrix();
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BITS);
 		glScaled(0.1, 0.1, 0.1);
-
-		//box.draw3D();
-		//cube2.draw_3D();
-
-		vec3 tmp = vec3(cube1.getPostion().x + 0.5, cube1.getPostion().y, cube1.getPostion().z);
-		cube1.applyForce(virtualGravity,cube1.getPostion());
-		//cube1.applyForce(tVec, tmp);
-		//tVec = vec3(0.0f);
-	//	virtualGravity = vec3(0.0f);
-		
-		CollisionInfo result = engine.ObbVsOBB(cube1.getOBB(), cube2.getOBB());
-		if (result.getIsCollision())
-		{
-			engine.resolvePentration(&cube1, &cube2, result.getDepth(), result.getNormal());
-			for (int i = 0; i < result.points.size(); i++) {
-				CollisionInfo tmp = CollisionInfo(result);
-				tmp.points.clear();
-				tmp.points.push_back(result.points[i]);
-			
-				for (int k = 0; k < 8; k++)
-				{
-					vec3 j = engine.J(cube1, cube2, tmp);
-					/*cube1.applyForce(j, result.points[i]);
-					cube2.applyForce(-j, result.points[i]); */
-					cube1.setSpeed(cube1.getSpeed() + (j / cube1.getMass()));
-					cube2.setSpeed(cube2.getSpeed() - (j / cube2.getMass()));
-
-					vec3 vect1 = (result.points[i] - cube1.getPostion());
-					vec3 torq1 = cross(vect1, j);
-					vec3 vect2 = (result.points[i] - cube2.getPostion());
-					vec3 torq2 = cross(vect2, j);
-					mat3 I1 = cube1.obb.u * cube1.getITensor() * (glm::transpose(cube1.obb.u));
-					mat3 I2 = cube2.obb.u * cube2.getITensor() * (glm::transpose(cube2.obb.u));
-
-					cube1.omega += inverse(I1) * torq1;
-					cube2.omega -= inverse(I2) * torq2;
-				}
-			/*	
-			*/}
-		}
 		float dur = 1 / fps;
-		cube1.Integrate(dur);
-		cube2.Integrate(dur);
-		cube1.draw_3D();
-		cube2.draw_3D();
-		
-
-		/*shpere and shpere Test
-		sp2.applyForce(virtualGravity, sp1.getPostion());
-		sp2.Integrate();
-		res = engine.ShereVsShpere(sp1, sp2);
-		if (res.getIsCollision())
-		{
-			vec3 j = engine.J(sp1, sp2, res);
-			j = j * res.getNormal();
-			vec3 revJ = j * (-res.getNormal());
-			sp1.applyForce(j,res.points[0]);
-			sp2.applyForce(revJ, res.points[0]);
-		}
-
-		sp1.Integrate();
-		sp1.draw_3D();
-		sp2.draw_3D();
-		*/
-		/* cube and shpere test
-		cube1.applyForce(virtualGravity,vec3(0.0f));
-		cube1.Integrate();
-		sp1.Integrate();
-		virtualGravity = vec3(0.0f);
-		CollisionInfo CRes = engine.ShepreAndOBB(sp1,cube1.getOBB());
-		if (CRes.getIsCollision())
-		{
-			vec3 j = engine.J(sp1, cube1, CRes);
-	
-			vec3 positiveJ = j * CRes.getNormal();
-			vec3 minesJ = j*(- CRes.getNormal());
-			cube1.applyForce(minesJ,CRes.getCollisionPoint());
-			sp1.applyForce(positiveJ, CRes.getCollisionPoint());
-		}
-		
-		sp1.draw_3D();
-		cube1.draw_3D();
-		*/
+		engine.drawCubes();
+		engine.drawShperes();
 	}
 	glPopMatrix();
 }
-
 void glut_display_func()
 {
 
@@ -232,17 +184,15 @@ void glut_display_func()
 	ImGui_ImplGLUT_NewFrame();
 	camera();
 	my_display_code();
+
+	Gui();
 	// Rendering
 	ImGui::Render();
 	ImGuiIO& io = ImGui::GetIO();
-//	std::cout<<io.KeysDown[0];
-//	std::cout << io.WantCaptureKeyboard;
-//	if (io.WantCaptureKeyboard)
-	//	io.WantCaptureKeyboard = false;
 	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 	glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-	//glClear(GL_COLOR_BUFFER_BIT);
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -258,10 +208,6 @@ void glut_display_func()
 	
 }
 
-// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-// - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-// Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
 
 int main(int argc, char** argv)
 {
@@ -280,26 +226,16 @@ int main(int argc, char** argv)
 		glutEnterGameMode();
 	}
 	*/
-	// Setup GLUT display function
-	// We will also call ImGui_ImplGLUT_InstallFuncs() to get all the other functions installed for us,
-	// otherwise it is possible to install our own functions and call the imgui_impl_glut.h functions ourselves.
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glutDisplayFunc(glut_display_func);
 	glutReshapeFunc(reshape);
 	glutTimerFunc(0, timer, 0);
 	glutIdleFunc(glut_display_func);
-	//glutKeyboardFunc(keyboard);
-	//glutSpecialFunc(keyboard);
-
+	
 	//// Setup Dear ImGui context
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-//	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-														   //// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
-	////ImGui::StyleColorsClassic();
-
-	// Setup Platform/Renderer bindings
 	ImGui_ImplGLUT_Init();
 	ImGui_ImplGLUT_InstallFuncs();
 	ImGui_ImplOpenGL2_Init();
@@ -307,10 +243,9 @@ int main(int argc, char** argv)
 
 
 	//scale the cordinates
-	glScaled(0.1, 0.1, 0.1);
+	glScaled(0.1, 0.1, 0.1);	
 	glEnable(GL_DEPTH_TEST);
 	
-
 	glutMainLoop();
 
 	//Cleanup
@@ -323,74 +258,27 @@ int main(int argc, char** argv)
 void reshape(int w, int h)
 {
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+	// Compute aspect ratio of the new window
+	if (h == 0) h = 1;                // To prevent divide by 0
+	GLfloat aspect = (GLfloat)w / (GLfloat)h;
+
+	// Set the viewport to cover the new window
 	glViewport(0, 0, w, h);
-	// Set the correct perspective.
-	glMatrixMode(GL_MODELVIEW);
+
+	// Set the aspect ratio of the clipping volume to match the viewport
+	glMatrixMode(GL_PROJECTION);  // To operate on the Projection matrix
+	glLoadIdentity();             // Reset
+								  // Enable perspective projection with fovy, aspect, zNear and zFar
+	gluPerspective(45.0f, aspect, 0.1f, 100.0f);
 
 }
 void timer(int)
 {
-	//glutPostRedisplay();
+	glutPostRedisplay();
 	glutTimerFunc(1, timer, 0);
 }
-/*
- void computePos(float deltaMove) {
- x += deltaMove * lx * 0.1f;
- z += deltaMove * lz * 0.1f;
- }
-
- void computeDir(float deltaAngle) {
-
- angle += deltaAngle;
- lx = sin(angle);
- lz = -cos(angle);
- }*/
 void camera() {
-	//if (deltaMove)
-	//	computePos(deltaMove);
-	//if (deltaAngle)
-	//	computeDir(deltaAngle);
-	//
-	// Clear Color and Depth Buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-
-
-	// Reset transformations
-	//glLoadIdentity();
-	// Set the camera
 	gluLookAt(movX, movY, movZ, lX, lY, 1, 0, 1, 0);
-
-	//glutSolidCube(3);
-}
-void drawSnowMan()
-{
-	//the snow man
-	// Draw Body
-	glTranslatef(0.0f, 0.75f, 0.0f);
-	glutSolidSphere(0.75f, 20, 20);
-
-	// Draw Head
-	glTranslatef(0.0f, 1.0f, 0.0f);
-	glutSolidSphere(0.25f, 20, 20);
-
-	// Draw Eyes
-	glPushMatrix();
-	glColor3f(0.0f, 0.0f, 0.0f);
-	glTranslatef(0.05f, 0.10f, 0.18f);
-	glutSolidSphere(0.05f, 10, 10);
-	glTranslatef(-0.1f, 0.0f, 0.0f);
-	glutSolidSphere(0.05f, 10, 10);
-	glPopMatrix();
-
-	// Draw Nose
-	glColor3f(1.0f, 0.5f, 0.5f);
-	glutSolidCone(0.08f, 0.5f, 10, 2);
-	//glutWireCone(0.08f, 0.5f, 10, 2);
-}
-void keyboard(int k, int x, int y)
-{
-	std::cout << k;
 }

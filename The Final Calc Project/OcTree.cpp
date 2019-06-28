@@ -1,4 +1,4 @@
-#include"OcTree.h"
+/*#include"OcTree.h"
 
 OcTree OcTree::CreateNode(BoundingBox region, std::list<Shapes> objList)
 {
@@ -290,4 +290,4 @@ void OcTree::draw3D(vec3 color)
 	}
 	glPopMatrix();
 
-}
+}*/

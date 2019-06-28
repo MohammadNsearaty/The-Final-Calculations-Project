@@ -8,19 +8,39 @@
 #include "Plane.h"
 #include "CollisionInfo.h"
 #include"Interval.h"
+#include"Ray.h"
 using namespace std;
 
 #define EPSILON 1e-6
 #define colEpsilon 0.9f
 #define MAX 1e6
 class PhysicsEngine {
-private:
+public:
 	vector<Shapes*> Objects;
 	vector<Plane> planes;
+	vector<Cube> cubeList;
+	vector<Shpere> shperList;
 
 public:
 	PhysicsEngine();
-
+	void addCube(Cube c)
+	{
+		cubeList.push_back(c);
+	}
+	void addShper(Shpere sp)
+	{
+		shperList.push_back(sp);
+	}
+	void drawCubes()
+	{
+		for (int i = 0; i < cubeList.size(); i++)
+			cubeList[i].draw_3D();
+	}
+	void drawShperes()
+	{
+		for (int i = 0; i < shperList.size(); i++)
+			shperList[i].draw_3D();
+	}
 	int getLength() { return Objects.size(); }
 
 	Shapes* getElement(int i)
@@ -57,7 +77,57 @@ public:
 	CollisionInfo ObbVsOBB(OBB o1, OBB o2);
 	CollisionInfo intersect(Shapes s1, Shapes s2);
 	void resolvePentration(Shapes *s1, Shapes *s2, float depth,vec3 normal);
+	float rayCast(Shpere shpere, Ray ray);
+	float rayCast(Cube cube, Ray ray);
+	CollisionInfo ShpereVsPlane(Shpere s, Plane p);
+	CollisionInfo CubeVsPlane(Cube b, Plane p);
 };
+float PhysicsEngine::rayCast(Shpere shpere, Ray ray)
+{
+	vec3 e = shpere.getPostion() - ray.orgin;
+	float r = shpere.getlength()[0] * shpere.getlength()[0];
+	float len = dot(e, e);
+	float a = dot(e, ray.dir);
+
+	float bsq = len - (a*a);
+	float f = glm::sqrt(r - bsq);
+
+	if (r - (len - (a*a)) < 0.0f)
+		return -1;
+	else if (len < r)
+		return a + f;
+	return a - f;
+}
+float PhysicsEngine::rayCast(Cube cube, Ray ray)
+{
+	vec3 X = cube.obb.u[0];
+	vec3 Y = cube.obb.u[1];
+	vec3 Z = cube.obb.u[2];
+	vec3 p = cube.obb.center - ray.orgin;
+	vec3 f = vec3(dot(X, ray.dir), dot(Y, ray.dir), dot(Z, ray.dir));
+	vec3 e = vec3(dot(X, p), dot(Y, p), dot(Z, p));
+	float t[6] = { 0, 0, 0, 0, 0, 0 };
+	for (int i = 0;i < 3; i++)
+	{
+		if (f[i] <= 0)
+		{//if the ray is parallel to the slab and the ray orgin not insde the slap
+			if (-e[i] - cube.obb.edges[i] > 0 || -e[i] + cube.obb.edges[i] < 0)
+				return -1;
+			f[i] = 0.00001f;
+		}
+		t[i * 2 + 0] = (e[i] + cube.obb.edges[i]) / f[i];
+		t[i * 2 + 1] = (e[i] - cube.obb.edges[i]) / f[i];
+		float tmin = glm::max(max(min(t[0], t[1]), min(t[2], t[3])), min(t[4], t[5]));
+		float tmax = glm::min(min(max(t[0], t[1]), max(t[2], t[3])), max(t[4], t[5]));
+		if (tmax < 0)//the cube is behind the orgin of the ray
+			return -1.0f;
+		if (tmin > tmax)//no intersect
+			return -1.0f;
+		if (tmin < 0.0f)//the ray orgin is in the cube
+			return tmax;
+		return tmin;
+	}
+}
 void PhysicsEngine::resolvePentration(Shapes *s1, Shapes *s2, float depth,vec3 normal)
 {
 	float totalMass = s1->getMass() + s2->getMass();
@@ -77,6 +147,57 @@ CollisionInfo PhysicsEngine::intersect(Shapes s1, Shapes s2)
 		return this->ShepreAndOBB(s1, s2.getOBB());
 	else if (s1.getType() == 1 && s2.getType() == 1)
 		return this->ObbVsOBB(s1.getOBB(), s2.getOBB());
+}
+CollisionInfo PhysicsEngine::ShpereVsPlane(Shpere s, Plane p)
+{
+	vec3 point = this->ClosestPointToPlane(s.getPostion(), p);
+	vec3 vect = s.getPostion() - point;
+	float distSq = dot(vect, vect);
+	float raduisSq = s.getlength()[0] * s.getlength()[0];
+	if (distSq - raduisSq < 1e-6)
+	{
+		CollisionInfo res;
+		res.points.push_back(point);
+		res.setNormal(glm::normalize(p.getNormal()));
+		float len = glm::length(vect);
+		res.setDepth(s.getlength()[0] - len * 0.5f);
+		res.setIsCollision(true);
+		return res;
+	}
+	CollisionInfo res;
+	this->resetCollisionInfo(&res);
+	return res;
+}
+CollisionInfo PhysicsEngine::CubeVsPlane(Cube b, Plane p)
+{
+	OBB obb = b.obb;
+	//project the cube vertices onto the plane normal
+	float interv = obb.edges[0] * abs(dot(p.getNormal(), obb.u[0])) +
+		obb.edges[1] * abs(dot(p.getNormal(), obb.u[1])) +
+		obb.edges[2] * abs(dot(p.getNormal(), obb.u[2]));
+	float d = dot(p.getNormal(), obb.center);
+	float dist = d - p.getDistance();
+	if (abs(dist) <= interv)
+	{
+		CollisionInfo data;
+		std::vector<vec3> points;
+		std::vector<Line> edges = b.obb.getEdges();
+		for (int i = 0; i < 8; i++)
+		{
+			vec3 resP;
+			bool res = this->ClipToPlane(p, edges[i], &resP);
+			if (res)
+				points.push_back(resP);
+		}
+		data.setIsCollision(true);
+		data.setNormal(glm::normalize(p.getNormal()));
+		data.points = points;
+		data.setDepth(0.0f);
+		return data;
+	}
+	CollisionInfo res;
+	this->resetCollisionInfo(&res);
+	return res;
 }
 CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 {
@@ -237,6 +358,7 @@ vec3 PhysicsEngine::J(Shapes s1, Shapes s2, CollisionInfo info)
 	vec3 ra = info.points[0] - s1.getPostion();
 	vec3 rb = info.points[0] - s2.getPostion();
 
+
 	vec3 dPa = s1.getSpeed() + glm::cross(s1.omega, ra);
 	vec3 dPb = s2.getSpeed() + glm::cross(s2.omega, rb);
 
@@ -251,8 +373,7 @@ vec3 PhysicsEngine::J(Shapes s1, Shapes s2, CollisionInfo info)
 
 	vec3 upTerm = (-1.0f)*(1.0f + colEpsilon) * Vrel;
 
-	vec3 cr1 = glm::cross(ra, n);
-	vec3 c1 = n *(Ia * cr1);
+	vec3 c1 = n * (Ia* glm::cross(ra, n));
 	vec3 c2 = n * (Ib* glm::cross(rb, n));
 
 
@@ -264,8 +385,6 @@ vec3 PhysicsEngine::J(Shapes s1, Shapes s2, CollisionInfo info)
 	vec3 j = upTerm / downTerm;
 
 	return j*n;
-
-
 }
 CollisionInfo PhysicsEngine::ShereVsShpere(Shapes sp1, Shapes sp2)
 {

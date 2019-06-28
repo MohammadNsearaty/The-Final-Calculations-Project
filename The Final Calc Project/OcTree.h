@@ -1,5 +1,5 @@
 #pragma once
-#ifndef OCTREE_H
+/*#ifndef OCTREE_H
 #define OCTREE_H
 #include"BoundingBox.h"
 #include<vector>
@@ -74,3 +74,4 @@ public:
 
 
 #endif
+*/

@@ -45,6 +45,7 @@ public:
 	vec3 frocesAcc = vec3(0.0f);
 	vec3 tourqAcc = vec3(0.0f);
 	vec3 omega = vec3(0.0f);
+	int drawType;
 public:OBB obb;
 
 	Shapes() {
@@ -62,6 +63,7 @@ public:OBB obb;
 		pitch = yaw = roll = 0.0f;
 		quat = fquat(0, vec3(0, 1, 0));
 		alive = true;
+		drawType = 1;
 	//	obb.u = mat3(0.0f);
 		//obb.u[0][0] = obb.u[1][1] = obb.u[2][2] = 1.0f;
 	}
@@ -79,6 +81,15 @@ public:OBB obb;
 		mass = 0.0f;
 		pitch = yaw = roll = 0.0f;
 		alive = true;
+		drawType = 1;
+	}
+	void setDrawType(int i)
+	{
+		if (i != 1 && i != 2)
+			drawType = 1;
+		else
+			drawType = i;
+			
 	}
 	bool isAwake()
 	{

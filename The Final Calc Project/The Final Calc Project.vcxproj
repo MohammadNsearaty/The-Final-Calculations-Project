@@ -184,8 +184,17 @@
     <ClInclude Include="PhysicsEngineComponent.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Quad.h" />
+    <ClInclude Include="Ray.h" />
     <ClInclude Include="Shape.h" />
     <ClInclude Include="Shpere.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\..\Desktop\gl_skybox\data\texture\back.jpg" />
+    <Image Include="..\..\..\..\..\Desktop\gl_skybox\data\texture\down.jpg" />
+    <Image Include="..\..\..\..\..\Desktop\gl_skybox\data\texture\front.jpg" />
+    <Image Include="..\..\..\..\..\Desktop\gl_skybox\data\texture\left.jpg" />
+    <Image Include="..\..\..\..\..\Desktop\gl_skybox\data\texture\right.jpg" />
+    <Image Include="..\..\..\..\..\Desktop\gl_skybox\data\texture\up.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
