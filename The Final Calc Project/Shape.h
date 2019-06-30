@@ -273,7 +273,7 @@ public:OBB obb;
 		matrix[1][2] = -v.x;
 		matrix[2][0] = -v.y;
 		matrix[2][1] = v.x;
-		return matrix;
+		return glm::transpose(matrix);
 	}
 	vec3 pointTolocalAxis(vec3 point)
 	{

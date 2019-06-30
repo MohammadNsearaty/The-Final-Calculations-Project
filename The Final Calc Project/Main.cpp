@@ -18,6 +18,7 @@
 #include"Ray.h"
 #include<string>
 #include<sstream>
+#include<ctime>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -30,6 +31,7 @@
 static bool show_demo_window = true;
 static bool show_another_window = false;
 static ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.00f, 1.00f);
+vec3 tPor = vec3(0, 1, 0);
 void reshape(int w, int h);
 void timer(int t);
 GLUquadric *q = gluNewQuadric();
@@ -245,6 +247,14 @@ void my_display_code()
 		engine.cubeList[i].applyForce((virtualGravity * engine.cubeList[i].getMass()), engine.cubeList[i].getPostion());
 	for (int i = 0; i < engine.shperList.size(); i++)
 		engine.shperList[i].applyForce((virtualGravity *engine.shperList[i].getMass()), engine.shperList[i].getPostion());
+	if (engine.cubeList.size() > 1)
+	{
+		vec3 tr = engine.cubeList[1].getPostion();
+		tr.x += 0.5;
+		
+		engine.cubeList[1].applyForce(tPor, tr);
+		tPor = vec3(0);
+	}
 	engine.checkIntersect();
 	engine.Integrate(1.0f / ImGui::GetIO().Framerate);
 	glPushMatrix();
@@ -258,7 +268,8 @@ void my_display_code()
 }
 void glut_display_func()
 {
-
+	float interval = 16.0f;
+	//float t =
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL2_NewFrame();
 	ImGui_ImplGLUT_NewFrame();
@@ -356,7 +367,7 @@ void reshape(int w, int h)
 void timer(int)
 {
 	glutPostRedisplay();
-	glutTimerFunc(1, timer, 0);
+	glutTimerFunc(1000/60, timer, 0);
 }
 void camera() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

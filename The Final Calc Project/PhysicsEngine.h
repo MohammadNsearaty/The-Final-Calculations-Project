@@ -164,7 +164,7 @@ void PhysicsEngine::resolvePentration(Shapes *s1, Shapes *s2, float depth,vec3 n
 {
 	float totalMass = s1->getMass() + s2->getMass();
 	float scale = depth / totalMass ;
-	vec3 correction = normal * scale * 0.45f;
+	vec3 correction = normal * scale ;
 	s1->setPosition(s1->getPostion() + correction * (1 / s1->getMass()));
 	s2->setPosition(s2->getPostion() - correction * (1 / s2->getMass()));
 	s1->obb.center = s1->getPostion();
@@ -181,15 +181,25 @@ void PhysicsEngine::checkIntersect()
 			if (res.getIsCollision())
 			{
 				this->resolvePentration(&cubeList[i], &cubeList[j], res.getDepth(), res.getNormal());
+
+				vector<vec3> allJ;
 				for (int p = 0; p < res.points.size(); p++)
 				{
 					CollisionInfo tmp = CollisionInfo(res);
+					vec3 point = vec3(res.points[p]);
 					tmp.points.clear();
 					tmp.points.push_back(res.points[p]);
 					vec3 J = this->J(cubeList[i], cubeList[j], tmp);
-					this->applyJ(J, tmp.points[0], i, 0, 1);
-					this->applyJ(J, tmp.points[0], j, 1, 1);
+					allJ.push_back(J);
+					//this->applyJ(J, tmp.points[0], i, 0, 1);
+					//this->applyJ(J, tmp.points[0], j, 1, 1);
 				}
+				for (int p = 0; p < allJ.size(); p++)
+				{
+					this->applyJ(allJ[p], res.points[p], i, 0, 1);
+					this->applyJ(allJ[p], res.points[p], j, 1, 1);
+				}
+				
 			}
 		}
 		for (int k = 0; k < shperList.size(); k++)
@@ -232,7 +242,6 @@ void PhysicsEngine::Integrate(float dur)
 }
 void PhysicsEngine::drawObjects()
 {
-
 	for (int i = 0; i < cubeList.size(); i++)
 		cubeList[i].draw_3D();
 	for (int i = 0; i < shperList.size(); i++)
@@ -352,9 +361,9 @@ CollisionInfo PhysicsEngine::ObbVsOBB(OBB o1, OBB o2)
 
 	result.points.insert(result.points.end(), c1.begin(), c1.end());
 	result.points.insert(result.points.end(), c2.begin(), c2.end());
-	//result.setIsCollision(true);
-	//result.setNormal(axis);
-	//return result;
+	result.setIsCollision(true);
+	result.setNormal(axis);
+	return result;
 	Interval interval = o1.getInterval(axis);
 	float distance = (interval.getMax() - interval.getMin()) * 0.5f - result.getDepth() * 0.5f;
 	vec3 POnPlane = o1.center + axis * distance;
