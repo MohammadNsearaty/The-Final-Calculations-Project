@@ -146,6 +146,7 @@ void Gui()
 	}
 	if (addCube)
 	{
+		addSphere = false;
 		ImGui::InputFloat3("Cube Position", &v[0], 2);
 		ImGui::InputFloat("Cube Mass", &mass);
 		ImGui::InputInt("Cube Rib length", &arm);
@@ -167,6 +168,7 @@ void Gui()
 	}
 	if (addSphere)
 	{
+		addCube = false;
 		ImGui::InputFloat3("Sphere Position", &v1[0]);
 		ImGui::InputFloat("Sphere Mass", &mass1);
 		ImGui::InputInt("Sphere Raduis", &raduis);
@@ -253,7 +255,7 @@ void my_display_code()
 		tr.x += 0.5;
 		
 		engine.cubeList[1].applyForce(tPor, tr);
-		tPor = vec3(0);
+		//tPor = vec3(0);
 	}
 	engine.checkIntersect();
 	engine.Integrate(1.0f / ImGui::GetIO().Framerate);

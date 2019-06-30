@@ -22,7 +22,6 @@ protected:
 	vec3 color;
 	vec3 acc;
 	vec3 speed;
-	vec3 angularMo;
 	//mat3 rotation;//the Matrix of rotation R(x)
 	//constant
 	mat3x3 iTensor;
@@ -42,6 +41,8 @@ protected:
 	bool awake;
 	bool alive;
 public:
+
+	vec3 angularMo = vec3(0.0f);
 	vec3 frocesAcc = vec3(0.0f);
 	vec3 tourqAcc = vec3(0.0f);
 	vec3 omega = vec3(0.0f);
@@ -172,13 +173,15 @@ public:OBB obb;
 		if (!this->awake)
 			return;
 		speed += (this->frocesAcc / mass )*duration ;
+		//speed *= 0.98f;
 		position += speed * duration;
 		obb.center = position;
 
 		mat3 I = obb.u * iTensor * (glm::transpose(obb.u));
-		omega += inverse(I) * tourqAcc * duration;	
+		angularMo += tourqAcc * duration;
+		omega = inverse(I) * angularMo;	
 	    mat3 mat = star(omega);
-		obb.u += mat * obb.u;
+		obb.u += mat * obb.u * duration;
 	
 	/*glm::fquat qOmega = fquat(0, omega);
 	quat += (1.0f / 2.0f) * (qOmega * quat * duration);

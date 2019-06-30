@@ -104,10 +104,9 @@ void PhysicsEngine::applyJ(vec3 J,vec3 point, int index1,int dir , int type)
 		vec3 r = point - cubeList[index1].getPostion();
 		vec3 torq = glm::cross(r, J);
 		if (dir == 0)
-			cubeList[index1].omega += inverse(cubeList[index1].getITensor()) * torq;
+			cubeList[index1].angularMo += torq;
 		else
-			cubeList[index1].omega -= inverse(cubeList[index1].getITensor()) * torq;
-
+			cubeList[index1].angularMo -= torq;
 	}
 }
 void  PhysicsEngine::addPlane(Plane p)
@@ -460,6 +459,8 @@ vec3 PhysicsEngine::J(Shapes s1, Shapes s2, CollisionInfo info)
 
 	mat3 Ia = s1.getOBB().u * (glm::inverse(s1.getITensor())) * (glm::transpose(s1.getOBB().u));
 	mat3 Ib = s2.getOBB().u * (glm::inverse(s2.getITensor()))* (glm::transpose(s2.getOBB().u));
+	vec3 omegaA = Ia * s1.angularMo;
+	vec3 omegaB = Ib * s2.angularMo;
 	vec3 ra = info.points[0] - s1.getPostion();
 	vec3 rb = info.points[0] - s2.getPostion();
 
