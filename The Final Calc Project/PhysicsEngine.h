@@ -12,7 +12,6 @@
 using namespace std;
 
 #define EPSILON 1e-6
-#define colEpsilon 0.9f
 #define MAX 1e6
 class PhysicsEngine {
 public:
@@ -20,7 +19,7 @@ public:
 	vector<Plane> planes;
 	vector<Cube> cubeList;
 	vector<Shpere> shperList;
-
+	float colEpsilon = 0.99f;
 public:
 	PhysicsEngine();
 	void addCube(Cube c)

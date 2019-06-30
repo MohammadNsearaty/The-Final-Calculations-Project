@@ -36,7 +36,7 @@ void reshape(int w, int h);
 void timer(int t);
 GLUquadric *q = gluNewQuadric();
 double movX = 0.0f, movY = 0.0f, movZ = 0.0f;
-double lX, lY;
+double lX = 2, lY = 3;
 float mass,mass1;
 int arm,raduis;
 float color[3],color1[3];
@@ -60,11 +60,13 @@ void camera();
 
 vec3 testForce = vec3(0.0007,0,0);
 vec3 virtualGravity = vec3(0, -9.8f,0);
+float editGravity[3] = { 0 , -9.8f,0 };
 vec3 tVec = vec3(0, -0.1, 0);
 bool checkbox1_enabled = false;
 bool checkbox2_enabled = false;
 Cube newCube;
 Shpere newShpere;
+void initRendering();
 float mv = 0.001;
 //int res = 0;
 float dist = 0.0;
@@ -140,6 +142,13 @@ void Gui()
 		movZ -= mv;
 	if(io.KeysDown[122]/*the Z key*/)
 		movZ += mv;
+	ImGui::InputFloat3("Gravity", &editGravity[0]);
+	ImGui::SameLine();
+	if (ImGui::Button("Apply Gravity"));
+	{
+		vec3 gr = vec3(editGravity[0], editGravity[1], editGravity[2]);
+		virtualGravity = gr;
+	}
 	if (ImGui::Button("add cube"))
 	{
 		addCube = true;
@@ -202,15 +211,34 @@ void Gui()
 	}
 	if (editCube)
 	{
+		editMass = engine.cubeList[editCindex].getMass();
+		editLength = engine.cubeList[editCindex].getlength()[0];
 		ImGui::InputFloat("Edit Mass", &editMass);
 		ImGui::InputFloat("Edit Rib", &editLength);
+		if (ImGui::Button("delete Sphere"))
+		{
+			vector<Cube> st;
+			for (int z = 0; z < engine.cubeList.size(); z++)
+			{
+				if (z == editCindex)
+					continue;
+				st.push_back(engine.cubeList[z]);
+			}
+			engine.cubeList = st;
+			editCube = false;
+		}
 		if (ImGui::Button("Apply Changes"))
 		{
-			engine.cubeList[editCindex].setMass(editMass);
-			engine.cubeList[editCindex].setLength(editLength);
-			engine.cubeList[editCindex].generateInteriaTensor();
-			engine.cubeList[editCindex].obb.edges = vec3(editLength / 2);
-			editCube = false;
+			if (editMass <= 0 || editLength <= 0)
+				cout << "Wrong Input for the Cube"<<endl;
+			else
+			{
+				engine.cubeList[editCindex].setMass(editMass);
+				engine.cubeList[editCindex].setLength(editLength);
+				engine.cubeList[editCindex].generateInteriaTensor();
+				engine.cubeList[editCindex].obb.edges = vec3(editLength / 2);
+				editCube = false;
+			}
 		}
 	}
 	for (int sp = 0; sp < engine.shperList.size(); sp++)
@@ -228,15 +256,33 @@ void Gui()
 	}
 	if (editSphere)
 	{
+		editSMass = engine.shperList[editSindex].getMass();
+		editSRaduis = engine.shperList[editSindex].getlength()[0];
 		ImGui::InputFloat("Edit Mass", &editSMass);
 		ImGui::InputFloat("Edit Rib", &editSRaduis);
+		if (ImGui::Button("delete Sphere"))
+		{
+			vector<Shpere> st;
+			for (int z = 0; z < engine.shperList.size(); z++)
+			{
+				if (z == editSindex)
+					continue;
+				st.push_back(engine.shperList[z]);
+			}
+			engine.shperList = st;
+		}
 		if (ImGui::Button("Apply Changes"))
 		{
-			engine.shperList[editSindex].setMass(editSMass);
-			engine.shperList[editSindex].setLength(editSRaduis);
-			engine.shperList[editSindex].generateInteriaTensor();
-			engine.shperList[editSindex].obb.edges = vec3(editSRaduis / 2);
-			editSphere = false;
+			if (editSMass <= 0 || editSRaduis <= 0)
+				cout << "wrong Input for the sphere"<<endl;
+			else
+			{
+				engine.shperList[editSindex].setMass(editSMass);
+				engine.shperList[editSindex].setLength(editSRaduis);
+				engine.shperList[editSindex].generateInteriaTensor();
+				engine.shperList[editSindex].obb.edges = vec3(editSRaduis);
+				editSphere = false;
+			}
 		}
 	}
 	ImGui::EndChild();
@@ -245,6 +291,14 @@ void Gui()
 	}
 void my_display_code()
 {
+	GLfloat mat_specular[] = { 1.2f, 1.2f, 1.2f, 1.0f }; //Color (0.2, 0.2, 0.2)
+	GLfloat mat_shininess[] = { 128.0}; //Color (0.5, 0.5, 0.5)
+	GLfloat lightPos0[] = { 0, 10.0f, -5.0f, 0.0f }; //Positioned at (4, 0, 8)
+	glMaterialfv(GL_BACK, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_BACK, GL_SHININESS, mat_shininess);
+
+
+	glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
 	for (int i = 1; i < engine.cubeList.size(); i++)
 		engine.cubeList[i].applyForce((virtualGravity * engine.cubeList[i].getMass()), engine.cubeList[i].getPostion());
 	for (int i = 0; i < engine.shperList.size(); i++)
@@ -333,9 +387,10 @@ int main(int argc, char** argv)
 
 
 	//scale the cordinates
-	glScaled(0.1, 0.1, 0.1);	
+	glScaled(0.1, 0.1, 0.1);
+	initRendering();
 	glEnable(GL_DEPTH_TEST);
-	bigCube.setDrawType(2);
+	//bigCube.setDrawType(2);
 	engine.addCube(bigCube);
 //	bigSphere.setDrawType(2);
 	//engine.addShper(bigSphere);
@@ -374,5 +429,16 @@ void timer(int)
 void camera() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	gluLookAt(movX, movY, movZ, lX, lY, -1, 0, 1, 0);
+	gluLookAt(movX, movY, movZ, lX, lY, -20, 0, 1, 0);
+}
+void initRendering() {
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_LIGHTING); //Enable lighting
+
+	glEnable(GL_LIGHT0); //Enable light #0
+	glEnable(GL_LIGHT1); //Enable light #1
+	glEnable(GL_NORMALIZE); //Automatically normalize normals
+	glShadeModel(GL_SMOOTH);	
+	glEnable(GL_COLOR_MATERIAL);//Enable smooth shading
 }
