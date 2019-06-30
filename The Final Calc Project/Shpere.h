@@ -15,6 +15,7 @@ private:
 public:
 	Shpere();
 	Shpere(GLUquadric *quadric, float r, float m, float x, float y, float z, float c1, float c2, float c3);
+
 	Shpere(vec3 pos, float mass, float raduis, vec3 color)
 	{
 		this->position = pos;

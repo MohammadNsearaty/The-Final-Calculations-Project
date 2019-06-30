@@ -42,34 +42,20 @@ public:
 			shperList[i].draw_3D();
 	}
 	int getLength() { return Objects.size(); }
-
 	Shapes* getElement(int i)
 	{
 		return Objects[i];
 	}
 	void addPlane(Plane plane);
 	Plane getPlane(int i);
-	int GetNumVector();
-
-	Shapes* GetPhysicsObject(unsigned int pos);
-
-	void AddObject(Shapes *obj);
-
-	void Simulate(float alpha);
-
-	void HandlerCollision();
-
-
 	vec3 ClosestPointToPlane(vec3 point, Plane plane);
 	float distPointToPlane(vec3 point, Plane plane);
 	vec3 ClosestPointToOBB(vec3 point, OBB obb);
 	float SqDistPointToOBB(vec3 point, OBB obb);
 	CollisionInfo ShepreAndOBB(Shapes s, OBB obb);
-
 	vec3 J(Shapes s1, Shapes s2, CollisionInfo info);
 	void resetCollisionInfo(CollisionInfo *info);
 	CollisionInfo ShereVsShpere(Shapes s1, Shapes s2);
-
 	//OBB Vs OBB auxillary methods
 	bool ClipToPlane(Plane plane, Line line, vec3* outPoint);
 	std::vector<vec3> ClipEdgesToOBB(std::vector<Line> edges, OBB obb);
@@ -81,7 +67,53 @@ public:
 	float rayCast(Cube cube, Ray ray);
 	CollisionInfo ShpereVsPlane(Shpere s, Plane p);
 	CollisionInfo CubeVsPlane(Cube b, Plane p);
+	void checkIntersect();
+	void Integrate(float dur);
+	void drawObjects();
+	void applyJ(vec3 J, vec3 point,int index,int dir,int type);
+
 };
+void PhysicsEngine::applyJ(vec3 J,vec3 point, int index1,int dir , int type)
+{
+	if (type == 0)//Sphere
+	{
+		//linear
+		if (dir == 0)
+			shperList[index1].setSpeed(shperList[index1].getSpeed() + (J / shperList[index1].getMass()));
+		else
+			shperList[index1].setSpeed(shperList[index1].getSpeed() - (J / shperList[index1].getMass()));
+
+		//angular
+		vec3 r = point - shperList[index1].getPostion();
+		vec3 torq = glm::cross(r, J);
+		if (dir == 0)
+			shperList[index1].omega += inverse(shperList[index1].getITensor()) * torq;
+		else
+			shperList[index1].omega -= inverse(shperList[index1].getITensor()) * torq;
+
+	}
+	else if (type == 1)
+	{
+		//linear
+		if(dir == 0)
+		    cubeList[index1].setSpeed(cubeList[index1].getSpeed() + (J / cubeList[index1].getMass()));
+		else
+			cubeList[index1].setSpeed(cubeList[index1].getSpeed() - (J / cubeList[index1].getMass()));
+
+		//angular
+		vec3 r = point - cubeList[index1].getPostion();
+		vec3 torq = glm::cross(r, J);
+		if (dir == 0)
+			cubeList[index1].omega += inverse(cubeList[index1].getITensor()) * torq;
+		else
+			cubeList[index1].omega -= inverse(cubeList[index1].getITensor()) * torq;
+
+	}
+}
+void  PhysicsEngine::addPlane(Plane p)
+{
+	this->planes.push_back(p);
+}
 float PhysicsEngine::rayCast(Shpere shpere, Ray ray)
 {
 	vec3 e = shpere.getPostion() - ray.orgin;
@@ -93,7 +125,7 @@ float PhysicsEngine::rayCast(Shpere shpere, Ray ray)
 	float f = glm::sqrt(r - bsq);
 
 	if (r - (len - (a*a)) < 0.0f)
-		return -1;
+		return -1.f;
 	else if (len < r)
 		return a + f;
 	return a - f;
@@ -131,14 +163,81 @@ float PhysicsEngine::rayCast(Cube cube, Ray ray)
 void PhysicsEngine::resolvePentration(Shapes *s1, Shapes *s2, float depth,vec3 normal)
 {
 	float totalMass = s1->getMass() + s2->getMass();
-	float scale = depth / totalMass;
-	vec3 correction = normal * scale;
-	s1->setPosition(s1->getPostion() - correction * (1 / s1->getMass()));
-	s2->setPosition(s2->getPostion() + correction * (1 / s2->getMass()));
+	float scale = depth / totalMass ;
+	vec3 correction = normal * scale * 0.45f;
+	s1->setPosition(s1->getPostion() + correction * (1 / s1->getMass()));
+	s2->setPosition(s2->getPostion() - correction * (1 / s2->getMass()));
 	s1->obb.center = s1->getPostion();
 	s2->obb.center = s2->getPostion();
 };
+void PhysicsEngine::checkIntersect()
+{
+	int num = 1;
+	for (int i = 0; i < cubeList.size(); i++)
+	{
+		for (int j = i+1; j < cubeList.size(); j++)
+		{
+			CollisionInfo res = ObbVsOBB(cubeList[i].getOBB(), cubeList[j].obb);
+			if (res.getIsCollision())
+			{
+				this->resolvePentration(&cubeList[i], &cubeList[j], res.getDepth(), res.getNormal());
+				for (int p = 0; p < res.points.size(); p++)
+				{
+					CollisionInfo tmp = CollisionInfo(res);
+					tmp.points.clear();
+					tmp.points.push_back(res.points[p]);
+					vec3 J = this->J(cubeList[i], cubeList[j], tmp);
+					this->applyJ(J, tmp.points[0], i, 0, 1);
+					this->applyJ(J, tmp.points[0], j, 1, 1);
+				}
+			}
+		}
+		for (int k = 0; k < shperList.size(); k++)
+		{
+			CollisionInfo res = this->ShepreAndOBB(shperList[k], cubeList[i].obb);
+			if (res.getIsCollision())
+			{
+				vec3 J = this->J(cubeList[i], shperList[k], res);
+				for (int z = 0; z < num; z++)
+				{
+					this->applyJ(J, res.points[0], i, 0, 1);
+					this->applyJ(J, res.points[0], k, 1, 0);
+				}
+				this->resolvePentration(&cubeList[i], &shperList[k], res.getDepth(), res.getNormal());
 
+			}
+		}
+	}
+	for (int i = 0; i < shperList.size(); i++)
+	{
+		for (int j = i+1; j < shperList.size(); j++)
+		{
+			CollisionInfo res = this->ShereVsShpere(shperList[i], shperList[j]);
+			if (res.getIsCollision())
+			{
+				this->resolvePentration(&shperList[i], &shperList[j], res.getDepth(), res.getNormal());
+				vec3 J = this->J(shperList[i], shperList[j], res);
+				this->applyJ(J, res.points[0], i, 0, 0);
+				this->applyJ(J, res.points[0], j, 1, 0);
+			}
+		}
+	}
+}
+void PhysicsEngine::Integrate(float dur)
+{
+	for (int i = 0; i < cubeList.size(); i++)
+		cubeList[i].Integrate(dur);
+	for (int i = 0; i < shperList.size(); i++)
+		shperList[i].Integrate(dur);
+}
+void PhysicsEngine::drawObjects()
+{
+
+	for (int i = 0; i < cubeList.size(); i++)
+		cubeList[i].draw_3D();
+	for (int i = 0; i < shperList.size(); i++)
+		shperList[i].draw_3D();
+}
 CollisionInfo PhysicsEngine::intersect(Shapes s1, Shapes s2)
 {
 	if (s1.getType() == 0 && s2.getType() == 0)
@@ -303,11 +402,10 @@ float PhysicsEngine::PentrationDepth(OBB o1, OBB o2, const vec3 axis, bool* outS
 	float length = max - min;
 	if (outShouldFlip != 0)
 	{
-		*outShouldFlip = (i2.getMin() < i1.getMin());
+		*outShouldFlip = (i1.getMin() < i2.getMin());
 	}
 	return (len1 + len2) - length;
 }
-
 std::vector<vec3> PhysicsEngine::ClipEdgesToOBB(std::vector<Line> edges, OBB obb)
 {
 	std::vector<vec3> result;
@@ -321,7 +419,6 @@ std::vector<vec3> PhysicsEngine::ClipEdgesToOBB(std::vector<Line> edges, OBB obb
 					result.push_back(intersection);
 	return result;
 }
-
 //check if plane and edge intersects
 bool PhysicsEngine::ClipToPlane(Plane plane, Line line, vec3* outPoint)
 {
@@ -349,7 +446,6 @@ void PhysicsEngine::resetCollisionInfo(CollisionInfo *info)
 		info->points.clear();
 	}
 }
-
 vec3 PhysicsEngine::J(Shapes s1, Shapes s2, CollisionInfo info)
 {
 
@@ -362,27 +458,27 @@ vec3 PhysicsEngine::J(Shapes s1, Shapes s2, CollisionInfo info)
 	vec3 dPa = s1.getSpeed() + glm::cross(s1.omega, ra);
 	vec3 dPb = s2.getSpeed() + glm::cross(s2.omega, rb);
 
-	vec3 n = info.getNormal();
+	vec3 n = normalize(info.getNormal());
 
-	vec3 Vrel = n * (dPa - dPb);
+	float Vrel = glm::dot(n,  (dPa - dPb));
 
 
 
 	float ma = 1 / s1.getMass();
 	float mb = 1 / s2.getMass();
 
-	vec3 upTerm = (-1.0f)*(1.0f + colEpsilon) * Vrel;
+	float upTerm = (-1.0f)*(1.0f + colEpsilon) * Vrel;
 
-	vec3 c1 = n * (Ia* glm::cross(ra, n));
-	vec3 c2 = n * (Ib* glm::cross(rb, n));
+	vec3 c1 = (Ia* glm::cross(ra, n));
+	vec3 c2 = (Ib* glm::cross(rb, n));
 
 
 	vec3 cross1 = glm::cross(c1, ra);
 	vec3 cross2 = glm::cross(c2, rb);
-	vec3 downTerm = ma + mb + cross1 + cross2;
+	float downTerm = ma + mb + dot(n,cross1 + cross2);
 
 
-	vec3 j = upTerm / downTerm;
+	float j = upTerm / downTerm;
 
 	return j*n;
 }
@@ -390,17 +486,17 @@ CollisionInfo PhysicsEngine::ShereVsShpere(Shapes sp1, Shapes sp2)
 {
 	CollisionInfo res;
 	resetCollisionInfo(&res);
-	float r = sp1.getlength()[0] + sp1.getlength()[0];
+	float r = sp1.getlength()[0] + sp2.getlength()[0];
 	vec3 d = sp2.getPostion() - sp1.getPostion();
 	float l = dot(d,d);
-	if (l - r*r > 0 || l == 0.0f)
+	if (l - r*r > 0 || l == 0)
 		return res;
 
 
 	res.setIsCollision(true);
 	float dist = glm::abs(length(d) - r) * 0.5f;
-	if (dist < 1e-3)
-		dist = 0.0f;
+	//if (dist < 1e-3)
+		//dist = 0.0f;
 	res.setDepth(dist);
 	d = normalize(d);
 	res.setNormal(d);
@@ -412,29 +508,50 @@ CollisionInfo PhysicsEngine::ShereVsShpere(Shapes sp1, Shapes sp2)
 }
 CollisionInfo PhysicsEngine::ShepreAndOBB(Shapes s, OBB obb)
 {
+	CollisionInfo result;
+	this->resetCollisionInfo(&result);
 	vec3 resPoint = this->ClosestPointToOBB(s.getPostion(), obb);
-	//float dist = this->SqDistPointToOBB(s.getPostion(), obb);
 	float dist = glm::dot(resPoint - s.getPostion(), resPoint - s.getPostion());
 	float sqRaduis = s.getlength()[0] * s.getlength()[0];
-	if (dist - sqRaduis < 1e-6)
+	if (dist > sqRaduis)
 	{
-		CollisionInfo result(s.getlength()[0], true, resPoint);
-		vec3 n = glm::normalize(resPoint - s.getPostion());
+		return result;
+	}
+	vec3 normal;
+	if (dist < 1e-6)
+	{
+		float msq = dot(resPoint - obb.center, resPoint - obb.center);
+		if (msq <= 1e-6)
+			return result;
+		normal = normalize(resPoint - obb.center);
+	}
+	else
+		normal = normalize(s.getPostion() - resPoint);
+	vec3 point = s.getPostion() - normal*s.getlength()[0];
+	float ds = dot(resPoint - point, resPoint - point);
+	result.setIsCollision(true);
+	result.points.push_back(resPoint);
+	result.setNormal(normal);
+	float depth = glm::length(resPoint - point);
+	result.setDepth(depth);
+	return result;
+		/*vec3 n = glm::normalize(resPoint - s.getPostion());
 		result.setNormal(n);
 		result.points.push_back(resPoint);
+		result.setIsCollision(true);
+		float depth = (s.getlength()[0] - glm::length(resPoint - s.getPostion())) / 2.0f;
+		result.setDepth(depth);
 		return result;
 	}
 	CollisionInfo wrongRes(-1, false, vec3(0.0f));
-	return wrongRes;
+	return wrongRes;*/
 }
-
 vec3 PhysicsEngine::ClosestPointToPlane(vec3 point, Plane plane)
 {
 	plane.Normalized();
 	float t = (glm::dot(plane.getNormal(), point) - plane.getDistance());
 	return point - t * plane.getNormal();
 }
-
 float PhysicsEngine::distPointToPlane(vec3 point, Plane plane)
 {
 	plane.Normalized();
@@ -452,65 +569,14 @@ vec3 PhysicsEngine::ClosestPointToOBB(vec3 point, OBB obb)
 	}
 	return res;
 }
-
 float PhysicsEngine::SqDistPointToOBB(vec3 point, OBB obb)
 {
 	vec3 p = ClosestPointToOBB(point, obb);
 	return glm::dot(p - point, p - point);
 }
-
 Plane PhysicsEngine::getPlane(int i)
 {
 	return planes[i];
 }
-void PhysicsEngine::addPlane(Plane plane)
-{
-	planes.push_back(plane);
-}
-PhysicsEngine::PhysicsEngine() {
-
-}
-
-
-int PhysicsEngine::GetNumVector() {
-
-	return (unsigned int)Objects.size();
-}
-
-Shapes* PhysicsEngine::GetPhysicsObject(unsigned int pos) {
-	return Objects[pos];
-}
-
-void PhysicsEngine::AddObject(Shapes* obj) {
-	Objects.push_back(obj);
-}
-
-void PhysicsEngine::Simulate(float alpha) {
-
-	//for (unsigned int i = 0; i < Objects.size(); i++) {
-	Objects[0]->Integrate(0.0f);
-	Objects[1]->Integrate(0.0f);
-
-	//	}
-}
-
-void PhysicsEngine::HandlerCollision() {
-
-	//	for (unsigned int i = 0; i < Objects.size(); i++) {
-
-	//		for (unsigned int j = i+1; j < Objects.size(); j++) {
-
-	Collision_Data data = Objects[0]->Collision(Objects[1]);
-	if (data.getisCollision()) {
-		Objects[0]->reverseSpeed(0.005, -0.005, 0.005);
-		Objects[1]->reverseSpeed(-0.005, 0.005, 0.005);
-	}
-	//	}
-
-
-	//	}
-
-}
-
-
+PhysicsEngine::PhysicsEngine() {}
 #endif // !PhysicsEngine_H

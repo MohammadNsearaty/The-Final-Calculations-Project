@@ -12,7 +12,6 @@ class Plane {
 private:
 	vec3 normal;
 	float distance;
-
 public:
 	Plane() {
 		normal = vec3(0.0f);
@@ -34,7 +33,10 @@ public:
 		float magnitude = glm::length(normal);
 		return Plane(normal / magnitude, distance / magnitude);
 	}
+	void drawPlane()
+	{
 
+	}
 
 	//Collision_Data Collision_Shpere_Plane(Shapes *shape);
 

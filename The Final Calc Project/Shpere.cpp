@@ -49,11 +49,11 @@ void Shpere::draw_3D() {
 
 		glRotated(pitch, 1, 0, 0);
 		glRotated(yaw, 0, 1, 0);
-		glRotated(roll, 0, 0, 1);
+		glRotated(roll, 0, 0, 1); 
 		if (drawType == 1)
 			glutSolidSphere(length[0], 32, 32);
 		else
-			glutWireSphere(length[0], 32, 32);
+			glutWireSphere(length[0], 20, 20);
 		glColor3d(1, 1, 1);
 
 	}

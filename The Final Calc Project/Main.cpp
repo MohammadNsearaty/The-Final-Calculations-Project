@@ -16,6 +16,8 @@
 #include<time.h>
 #include<vector>
 #include"Ray.h"
+#include<string>
+#include<sstream>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -25,7 +27,6 @@
 #ifdef _MSC_VER
 #pragma warning (disable: 4505) // unreferenced local function has been removed
 #endif
-
 static bool show_demo_window = true;
 static bool show_another_window = false;
 static ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.00f, 1.00f);
@@ -40,9 +41,14 @@ float color[3],color1[3];
 
 float v[3] = { 0.0f,0.0f,0.0f };
 float v1[3] = { 0.0f,0.0f,0.0f };
+float editMass = 0.0f, editLength = 0.0f;
+float editSMass = 0.0f, editSRaduis = 0.0f;
+bool editCube = false, editSphere = false;
+int editCindex = 0, editSindex = 0;
 //the physics engine
 PhysicsEngine engine = PhysicsEngine();
-
+Cube bigCube = Cube(vec3(0, -14, 0), 1e3, 16, vec3(0, 1, 0));
+Shpere bigSphere = Shpere(vec3(0, -14, 0), 1e6, 8, vec3(0, 1, 0));
 bool addCube = false;
 bool addSphere = false;
 int frame = 0, Time, timeBase = 0;
@@ -51,7 +57,7 @@ void camera();
 
 
 vec3 testForce = vec3(0.0007,0,0);
-vec3 virtualGravity = vec3(0, -0.98,0);
+vec3 virtualGravity = vec3(0, -9.8f,0);
 vec3 tVec = vec3(0, -0.1, 0);
 bool checkbox1_enabled = false;
 bool checkbox2_enabled = false;
@@ -72,20 +78,35 @@ void Gui()
 	static float f = 0.0f;
 	static int counter = 0;
 	ImGuiIO& io = ImGui::GetIO();
-/*	if (io.MouseDown[0] || io.MouseDown[1])
+	/*if (io.MouseDown[0] || io.MouseDown[1])
 	{
 		system("CLS");
-		ImVec2 mouse = io.MousePos;
+		ImVec2 mouse = ImGui::GetMousePos();
 		float h = glutGet(GLUT_WINDOW_HEIGHT);
 		float w = glutGet(GLUT_WINDOW_WIDTH);
 		float x = (mouse.x - (w / 2));
 		float y = (mouse.y - (h / 2));
 		x /= 120 /2;
 		y /= 72 / 2;
-		
-		Ray ray = Ray(vec3(movX, movY, movZ), vec3(x, y, 1));
-		cout << ray.orgin.x << "," << ray.orgin.y << "," << ray.orgin.z << endl;
-		cout<<engine.rayCast(cube1, ray);
+		vec4 clipSpace = vec4(x, y, -1.0f, 1.0f);
+
+		vec3 front = vec3(lX, lY, -1);
+		vec3 posi = vec3(movX, movY, movZ);
+		mat4 view = glm::lookAt(posi, posi + front, vec3(0, 1, 0));
+		mat4 projection = glm::perspective(45.0f, w / h, 0.1f, 100.0f);
+		mat4 InvertProjection = inverse(projection);
+		vec4 eyeCord = InvertProjection * clipSpace;
+		eyeCord = vec4(eyeCord.x, eyeCord.y, -1.0f, 0.f);
+		vec4 worldCord = inverse(view) * eyeCord;
+		vec3 rayWorld = vec3(worldCord.x, worldCord.y, worldCord.z);
+		rayWorld = normalize(rayWorld);
+	//	posi = posi*10.f;
+		Ray ray = Ray(posi, rayWorld);
+		if(engine.cubeList.size() !=0)
+	     	cout<<engine.rayCast(engine.cubeList[0], ray);
+		if (engine.shperList.size() != 0)
+			cout << engine.rayCast(engine.shperList[0], ray);
+
 	}
 	*/
 	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
@@ -160,21 +181,80 @@ void Gui()
 		}
 	}
 	ImGui::SliderFloat("camera speed", &mv, 0.0f, 1.0f);   
-	ImGui::Text("Application average %.3f ms/frame (%.d FPS)", 1000.0f / (ImGui::GetIO().Framerate), fps);
+	ImGui::Text("Application average %.3f ms/frame (%.f FPS)", 1000.0f / (ImGui::GetIO().Framerate), ImGui::GetIO().Framerate);
+	ImGui::BeginChild("Scrolling Cubes");
+	for (int cu = 0; cu < engine.cubeList.size(); cu++)
+	{
+		std::ostringstream stream;
+		stream << "cube " << cu +1;
+		std::string str = stream.str();
+		char *cstr = new char[str.length() + 1];
+		strcpy(cstr, str.c_str());
+		if (ImGui::Button(cstr))
+		{
+			editCube = true;
+			editCindex = cu;
+		}
+	}
+	if (editCube)
+	{
+		ImGui::InputFloat("Edit Mass", &editMass);
+		ImGui::InputFloat("Edit Rib", &editLength);
+		if (ImGui::Button("Apply Changes"))
+		{
+			engine.cubeList[editCindex].setMass(editMass);
+			engine.cubeList[editCindex].setLength(editLength);
+			engine.cubeList[editCindex].generateInteriaTensor();
+			engine.cubeList[editCindex].obb.edges = vec3(editLength / 2);
+			editCube = false;
+		}
+	}
+	for (int sp = 0; sp < engine.shperList.size(); sp++)
+	{
+		std::ostringstream stream;
+		stream << "Shpere " << sp + 1;
+		std::string str = stream.str();
+		char *cstr = new char[str.length() + 1];
+		strcpy(cstr, str.c_str());
+		if (ImGui::Button(cstr))
+		{
+			editSphere = true;
+			editSindex = sp;
+		}
+	}
+	if (editSphere)
+	{
+		ImGui::InputFloat("Edit Mass", &editSMass);
+		ImGui::InputFloat("Edit Rib", &editSRaduis);
+		if (ImGui::Button("Apply Changes"))
+		{
+			engine.shperList[editSindex].setMass(editSMass);
+			engine.shperList[editSindex].setLength(editSRaduis);
+			engine.shperList[editSindex].generateInteriaTensor();
+			engine.shperList[editSindex].obb.edges = vec3(editSRaduis / 2);
+			editSphere = false;
+		}
+	}
+	ImGui::EndChild();
 	ImGui::End();
 
 	}
 void my_display_code()
 {
+	for (int i = 1; i < engine.cubeList.size(); i++)
+		engine.cubeList[i].applyForce((virtualGravity * engine.cubeList[i].getMass()), engine.cubeList[i].getPostion());
+	for (int i = 0; i < engine.shperList.size(); i++)
+		engine.shperList[i].applyForce((virtualGravity *engine.shperList[i].getMass()), engine.shperList[i].getPostion());
+	engine.checkIntersect();
+	engine.Integrate(1.0f / ImGui::GetIO().Framerate);
 	glPushMatrix();
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BITS);
 		glScaled(0.1, 0.1, 0.1);
-		float dur = 1 / fps;
-		engine.drawCubes();
-		engine.drawShperes();
+		engine.drawObjects();
 	}
 	glPopMatrix();
+	
 }
 void glut_display_func()
 {
@@ -184,16 +264,13 @@ void glut_display_func()
 	ImGui_ImplGLUT_NewFrame();
 	camera();
 	my_display_code();
-
 	Gui();
-	// Rendering
+	//Rendering
 	ImGui::Render();
 	ImGuiIO& io = ImGui::GetIO();
 	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 	glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
-
-
 	glutSwapBuffers();
 	glutPostRedisplay();
 
@@ -245,7 +322,10 @@ int main(int argc, char** argv)
 	//scale the cordinates
 	glScaled(0.1, 0.1, 0.1);	
 	glEnable(GL_DEPTH_TEST);
-	
+	bigCube.setDrawType(2);
+	engine.addCube(bigCube);
+//	bigSphere.setDrawType(2);
+	//engine.addShper(bigSphere);
 	glutMainLoop();
 
 	//Cleanup
@@ -257,19 +337,20 @@ int main(int argc, char** argv)
 }
 void reshape(int w, int h)
 {
-
+	
 	// Compute aspect ratio of the new window
 	if (h == 0) h = 1;                // To prevent divide by 0
 	GLfloat aspect = (GLfloat)w / (GLfloat)h;
 
 	// Set the viewport to cover the new window
-	glViewport(0, 0, w, h);
-
+	
 	// Set the aspect ratio of the clipping volume to match the viewport
 	glMatrixMode(GL_PROJECTION);  // To operate on the Projection matrix
 	glLoadIdentity();             // Reset
-								  // Enable perspective projection with fovy, aspect, zNear and zFar
+	glViewport(0, 0, w, h);
+	// Enable perspective projection with fovy, aspect, zNear and zFar
 	gluPerspective(45.0f, aspect, 0.1f, 100.0f);
+	glMatrixMode(GL_MODELVIEW);
 
 }
 void timer(int)
@@ -280,5 +361,5 @@ void timer(int)
 void camera() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	gluLookAt(movX, movY, movZ, lX, lY, 1, 0, 1, 0);
+	gluLookAt(movX, movY, movZ, lX, lY, -1, 0, 1, 0);
 }

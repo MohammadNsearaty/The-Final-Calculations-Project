@@ -89,13 +89,16 @@ public:OBB obb;
 			drawType = 1;
 		else
 			drawType = i;
-			
 	}
 	bool isAwake()
 	{
 		if (awake)
 			return true;
 		return false;
+	}
+	void setLength(float l)
+	{
+		length[0] = l;
 	}
 	bool Alive()
 	{
@@ -129,8 +132,8 @@ public:OBB obb;
 	}
 	void applyForce(vec3 force, vec3 point)
 	{
-		if (!obb.pointInOBB(point))
-			return;
+		//if (!obb.pointInOBB(point))
+			//return;
 		this->frocesAcc += force;
 		vec3 res = point - position;
 		this->tourqAcc += glm::cross(res,force);
@@ -172,23 +175,19 @@ public:OBB obb;
 		position += speed * duration;
 		obb.center = position;
 
-		//angularMo += this->tourqAcc;
 		mat3 I = obb.u * iTensor * (glm::transpose(obb.u));
-	//	vec3 omega1 = inverse(I) * angularMo;
-		omega += inverse(I) * tourqAcc;
-
-		
-	    mat3 mat = star(omega) * duration;
+		omega += inverse(I) * tourqAcc * duration;	
+	    mat3 mat = star(omega);
 		obb.u += mat * obb.u;
-	/*
-	glm::fquat qOmega = fquat(0, omega);
+	
+	/*glm::fquat qOmega = fquat(0, omega);
 	quat += (1.0f / 2.0f) * (qOmega * quat * duration);
 	obb.u = glm::toMat3(glm::normalize(quat));
-	vec3 axis = glm::eulerAngles(quat);
+	/*vec3 axis = glm::eulerAngles(quat);
 		pitch = glm::degrees(axis.x);
 		yaw = glm::degrees(axis.y);
-		roll = glm::degrees(axis.z);
-	*/	
+		roll = glm::degrees(axis.z);*/
+	
 
 		pitch = glm::degrees(atan2(obb.u[1][2], obb.u[2][2]));
 		yaw = glm::degrees(atan2(-obb.u[2][0], sqrt((obb.u[1][2] * obb.u[1][2]) + (obb.u[2][2] * obb.u[2][2]))));
